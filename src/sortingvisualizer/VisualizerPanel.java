@@ -4,45 +4,70 @@ import javax.swing.*;
 import java.awt.*;
 
 public class VisualizerPanel extends JPanel {
-    private static final int BAR_WIDTH = 10;
-    private static final int BAR_SPACING = 5;
     private int[] arrayToVisualize;
     private int highlightedBar1 = -1;
     private int highlightedBar2 = -1;
 
     public VisualizerPanel(int[] arrayToVisualize) {
         this.arrayToVisualize = arrayToVisualize;
+        // Dark theme background
+        setBackground(new Color(30, 30, 46));
+    }
+
+    public void setArrayToVisualize(int[] arrayToVisualize) {
+        this.arrayToVisualize = arrayToVisualize;
+        repaint();
     }
 
     public void setHighlightedBars(int barIndex1, int barIndex2) {
-        highlightedBar1 = barIndex1;
-        highlightedBar2 = barIndex2;
-
-        // Repaint the panel after setting highlighted bars
+        this.highlightedBar1 = barIndex1;
+        this.highlightedBar2 = barIndex2;
         repaint();
-        try {
-            Thread.sleep(100); // Adjust the delay for visualization
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        for (int i = 0; i < arrayToVisualize.length; i++) {
-            int barHeight = arrayToVisualize[i];
-            int x = i * (BAR_WIDTH + BAR_SPACING);
-            int y = getHeight() - barHeight;
+        if (arrayToVisualize == null || arrayToVisualize.length == 0) {
+            return;
+        }
 
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int totalBars = arrayToVisualize.length;
+        int panelWidth = getWidth();
+        int panelHeight = getHeight();
+
+        // Calculate dynamic width per bar based on available window width
+        double barWidth = (double) panelWidth / totalBars;
+
+        // Find max element value for proportional height scaling
+        int maxValue = 1;
+        for (int val : arrayToVisualize) {
+            if (val > maxValue) {
+                maxValue = val;
+            }
+        }
+
+        for (int i = 0; i < totalBars; i++) {
+            // Scale bar height dynamically with top padding
+            double scaledHeight = ((double) arrayToVisualize[i] / maxValue) * (panelHeight * 0.85);
+
+            int x = (int) (i * barWidth);
+            int y = panelHeight - (int) scaledHeight;
+            int width = Math.max(1, (int) barWidth - 1); // 1px spacing between bars
+            int height = (int) scaledHeight;
+
+            // Highlight swapping/comparing bars in vibrant red, active bars in purple
             if (i == highlightedBar1 || i == highlightedBar2) {
-                g.setColor(Color.RED); // Highlight the swapping bars in red
+                g2d.setColor(new Color(235, 77, 75)); // Red accent[cite: 1]
             } else {
-                g.setColor(Color.GREEN);
+                g2d.setColor(new Color(108, 92, 231)); // Vibrant purple default
             }
 
-            g.fillRect(x, y, BAR_WIDTH, barHeight);
+            g2d.fillRect(x, y, width, height);
         }
     }
 }
