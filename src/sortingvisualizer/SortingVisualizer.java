@@ -4,6 +4,7 @@ import java.util.function.BiConsumer;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
+import java.util.Arrays;
 
 public class SortingVisualizer extends JFrame {
     private static final int ARRAY_SIZE = 50;
@@ -12,34 +13,34 @@ public class SortingVisualizer extends JFrame {
 
     private int[] array;
     private VisualizerPanel visualizerPanel;
+    private JComboBox<String> arrayTypeSelector;
 
     public SortingVisualizer() {
         setTitle("Sorting Algorithms Visualizer");
-        setSize(900, 650);
+        setSize(950, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
-        // Dark theme background for main window
         getContentPane().setBackground(new Color(30, 30, 46));
         setLayout(new BorderLayout());
 
+        // Default initial array
         array = generateRandomArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
 
         visualizerPanel = new VisualizerPanel(array);
         add(visualizerPanel, BorderLayout.CENTER);
 
-        // Control Panel (Top Header Bar)
-        JPanel controlPanel = new JPanel();
-        controlPanel.setBackground(new Color(24, 24, 37));
-        controlPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
-        controlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        // Top Control Panel (Algorithm Selectors)
+        JPanel topControlPanel = new JPanel();
+        topControlPanel.setBackground(new Color(24, 24, 37));
+        topControlPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
+        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
 
         JLabel titleLabel = new JLabel("Sorting Visualizer ");
         titleLabel.setForeground(new Color(205, 214, 244));
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
-        controlPanel.add(titleLabel);
+        topControlPanel.add(titleLabel);
 
-        // Buttons
         JButton bubbleBtn = createStyledButton("Bubble Sort", new Color(137, 180, 250));
         bubbleBtn.addActionListener(e -> new SortingTask(SortingAlgorithms::bubbleSort).execute());
 
@@ -49,33 +50,117 @@ public class SortingVisualizer extends JFrame {
         JButton selectionBtn = createStyledButton("Selection Sort", new Color(250, 179, 135));
         selectionBtn.addActionListener(e -> new SortingTask(SortingAlgorithms::selectionSort).execute());
 
-        controlPanel.add(bubbleBtn);
-        controlPanel.add(insertionBtn);
-        controlPanel.add(selectionBtn);
+        topControlPanel.add(bubbleBtn);
+        topControlPanel.add(insertionBtn);
+        topControlPanel.add(selectionBtn);
 
-        add(controlPanel, BorderLayout.NORTH);
+        add(topControlPanel, BorderLayout.NORTH);
+
+        // Bottom Control Panel (Array Distribution Controls)
+        JPanel bottomControlPanel = new JPanel();
+        bottomControlPanel.setBackground(new Color(24, 24, 37));
+        bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        bottomControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+
+        JLabel arrayTypeLabel = new JLabel("Distribution:");
+        arrayTypeLabel.setForeground(new Color(205, 214, 244));
+        arrayTypeLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        bottomControlPanel.add(arrayTypeLabel);
+
+        String[] distributions = {"Random", "Nearly Sorted", "Reversed", "Few Unique"};
+        arrayTypeSelector = new JComboBox<>(distributions);
+        arrayTypeSelector.setBackground(new Color(49, 50, 68));
+        arrayTypeSelector.setForeground(new Color(205, 214, 244));
+        arrayTypeSelector.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        bottomControlPanel.add(arrayTypeSelector);
+
+        JButton generateBtn = createStyledButton("Generate Array", new Color(245, 194, 231));
+        generateBtn.addActionListener(e -> generateNewArray());
+        bottomControlPanel.add(generateBtn);
+
+        add(bottomControlPanel, BorderLayout.SOUTH);
     }
 
     private JButton createStyledButton(String text, Color accentColor) {
         JButton button = new JButton(text);
         button.setFont(new Font("SansSerif", Font.BOLD, 12));
         button.setBackground(accentColor);
-        button.setForeground(new Color(17, 17, 27)); // Dark text for contrast
+        button.setForeground(new Color(17, 17, 27));
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
 
-    private int[] generateRandomArray(int size, int minValue, int maxValue) {
-        int[] array = new int[size];
-        Random random = new Random();
+    private void generateNewArray() {
+        String selected = (String) arrayTypeSelector.getSelectedItem();
+        if (selected == null) selected = "Random";
 
-        for (int i = 0; i < size; i++) {
-            array[i] = random.nextInt(maxValue - minValue + 1) + minValue;
+        switch (selected) {
+            case "Nearly Sorted":
+                array = generateNearlySortedArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
+                break;
+            case "Reversed":
+                array = generateReversedArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
+                break;
+            case "Few Unique":
+                array = generateFewUniqueArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
+                break;
+            case "Random":
+            default:
+                array = generateRandomArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
+                break;
         }
 
-        return array;
+        visualizerPanel.setArrayToVisualize(array);
+    }
+
+    private int[] generateRandomArray(int size, int minValue, int maxValue) {
+        int[] arr = new int[size];
+        Random random = new Random();
+        for (int i = 0; i < size; i++) {
+            arr[i] = random.nextInt(maxValue - minValue + 1) + minValue;
+        }
+        return arr;
+    }
+
+    private int[] generateNearlySortedArray(int size, int minValue, int maxValue) {
+        int[] arr = generateRandomArray(size, minValue, maxValue);
+        Arrays.sort(arr);
+        Random random = new Random();
+        int swaps = Math.max(1, size / 20); // ~5% swapped elements
+        for (int k = 0; k < swaps; k++) {
+            int idx1 = random.nextInt(size);
+            int idx2 = random.nextInt(size);
+            int temp = arr[idx1];
+            arr[idx1] = arr[idx2];
+            arr[idx2] = temp;
+        }
+        return arr;
+    }
+
+    private int[] generateReversedArray(int size, int minValue, int maxValue) {
+        int[] arr = generateRandomArray(size, minValue, maxValue);
+        Arrays.sort(arr);
+        for (int i = 0; i < size / 2; i++) {
+            int temp = arr[i];
+            arr[i] = arr[size - 1 - i];
+            arr[size - 1 - i] = temp;
+        }
+        return arr;
+    }
+
+    private int[] generateFewUniqueArray(int size, int minValue, int maxValue) {
+        int[] arr = new int[size];
+        Random random = new Random();
+        int[] uniqueValues = new int[5];
+        for (int i = 0; i < uniqueValues.length; i++) {
+            uniqueValues[i] = random.nextInt(maxValue - minValue + 1) + minValue;
+        }
+        for (int i = 0; i < size; i++) {
+            arr[i] = uniqueValues[random.nextInt(uniqueValues.length)];
+        }
+        return arr;
     }
 
     private class SortingTask extends SwingWorker<Void, Void> {
