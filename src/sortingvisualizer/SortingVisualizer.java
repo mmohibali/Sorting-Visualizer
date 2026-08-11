@@ -5,6 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
 import java.util.Arrays;
+import java.util.List;
+import java.util.ArrayList;
 
 public class SortingVisualizer extends JFrame {
     private static final int ARRAY_SIZE = 50;
@@ -14,6 +16,7 @@ public class SortingVisualizer extends JFrame {
     private int[] array;
     private VisualizerPanel visualizerPanel;
     private JComboBox<String> arrayTypeSelector;
+    private final List<JComponent> controlsToDisable = new ArrayList<>();
 
     public SortingVisualizer() {
         setTitle("Sorting Algorithms Visualizer");
@@ -24,13 +27,12 @@ public class SortingVisualizer extends JFrame {
         getContentPane().setBackground(new Color(30, 30, 46));
         setLayout(new BorderLayout());
 
-        // Default initial array
         array = generateRandomArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
 
         visualizerPanel = new VisualizerPanel(array);
         add(visualizerPanel, BorderLayout.CENTER);
 
-        // Top Control Panel (Algorithm Selectors)
+        // Top Control Panel
         JPanel topControlPanel = new JPanel();
         topControlPanel.setBackground(new Color(24, 24, 37));
         topControlPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
@@ -42,21 +44,25 @@ public class SortingVisualizer extends JFrame {
         topControlPanel.add(titleLabel);
 
         JButton bubbleBtn = createStyledButton("Bubble Sort", new Color(137, 180, 250));
-        bubbleBtn.addActionListener(e -> new SortingTask(SortingAlgorithms::bubbleSort).execute());
+        bubbleBtn.addActionListener(e -> runSortingTask(SortingAlgorithms::bubbleSort));
 
         JButton insertionBtn = createStyledButton("Insertion Sort", new Color(166, 227, 161));
-        insertionBtn.addActionListener(e -> new SortingTask(SortingAlgorithms::insertionSort).execute());
+        insertionBtn.addActionListener(e -> runSortingTask(SortingAlgorithms::insertionSort));
 
         JButton selectionBtn = createStyledButton("Selection Sort", new Color(250, 179, 135));
-        selectionBtn.addActionListener(e -> new SortingTask(SortingAlgorithms::selectionSort).execute());
+        selectionBtn.addActionListener(e -> runSortingTask(SortingAlgorithms::selectionSort));
 
         topControlPanel.add(bubbleBtn);
         topControlPanel.add(insertionBtn);
         topControlPanel.add(selectionBtn);
 
+        controlsToDisable.add(bubbleBtn);
+        controlsToDisable.add(insertionBtn);
+        controlsToDisable.add(selectionBtn);
+
         add(topControlPanel, BorderLayout.NORTH);
 
-        // Bottom Control Panel (Array Distribution Controls)
+        // Bottom Control Panel
         JPanel bottomControlPanel = new JPanel();
         bottomControlPanel.setBackground(new Color(24, 24, 37));
         bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
@@ -78,6 +84,9 @@ public class SortingVisualizer extends JFrame {
         generateBtn.addActionListener(e -> generateNewArray());
         bottomControlPanel.add(generateBtn);
 
+        controlsToDisable.add(arrayTypeSelector);
+        controlsToDisable.add(generateBtn);
+
         add(bottomControlPanel, BorderLayout.SOUTH);
     }
 
@@ -90,6 +99,17 @@ public class SortingVisualizer extends JFrame {
         button.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
+    }
+
+    private void setControlsEnabled(boolean enabled) {
+        for (JComponent control : controlsToDisable) {
+            control.setEnabled(enabled);
+        }
+    }
+
+    private void runSortingTask(BiConsumer<int[], VisualizerPanel> algorithm) {
+        setControlsEnabled(false);
+        new SortingTask(algorithm).execute();
     }
 
     private void generateNewArray() {
@@ -128,7 +148,7 @@ public class SortingVisualizer extends JFrame {
         int[] arr = generateRandomArray(size, minValue, maxValue);
         Arrays.sort(arr);
         Random random = new Random();
-        int swaps = Math.max(1, size / 20); // ~5% swapped elements
+        int swaps = Math.max(1, size / 20);
         for (int k = 0; k < swaps; k++) {
             int idx1 = random.nextInt(size);
             int idx2 = random.nextInt(size);
@@ -178,7 +198,8 @@ public class SortingVisualizer extends JFrame {
 
         @Override
         protected void done() {
-            visualizerPanel.repaint();
+            visualizerPanel.resetHighlights();
+            setControlsEnabled(true);
         }
     }
 

@@ -15,15 +15,16 @@ public class SortingAlgorithms {
 
                     visualizerPanel.setHighlightedBars(i - 1, i);
                     try {
-                        Thread.sleep(50); // Adjust the delay for visualization
+                        Thread.sleep(50);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        Thread.currentThread().interrupt();
+                        break;
                     }
-
-                    visualizerPanel.repaint(); // Repaint the panel after each swap
                 }
             }
         } while (swapped);
+
+        visualizerPanel.resetHighlights();
     }
 
     public static void insertionSort(int[] array, VisualizerPanel visualizerPanel) {
@@ -39,15 +40,16 @@ public class SortingAlgorithms {
 
                 visualizerPanel.setHighlightedBars(j + 1, j);
                 try {
-                    Thread.sleep(200); // Adjust the delay for visualization
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
+                    break;
                 }
-
-                visualizerPanel.repaint(); // Repaint the panel after each swap
             }
             array[j + 1] = key;
         }
+
+        visualizerPanel.resetHighlights();
     }
 
     public static void selectionSort(int[] array, VisualizerPanel visualizerPanel) {
@@ -56,21 +58,23 @@ public class SortingAlgorithms {
         for (int i = 0; i < n - 1; i++) {
             int minIndex = i;
             for (int j = i + 1; j < n; j++) {
+                visualizerPanel.setHighlightedBars(minIndex, j);
+                try {
+                    Thread.sleep(30);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+
                 if (array[j] < array[minIndex]) {
                     minIndex = j;
                 }
             }
 
             swap(array, minIndex, i);
-            visualizerPanel.setHighlightedBars(minIndex, i);
-            try {
-                Thread.sleep(100); // Adjust the delay for visualization
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            visualizerPanel.repaint(); // Repaint the panel after each swap
         }
+
+        visualizerPanel.resetHighlights();
     }
 
     private static void swap(int[] array, int i, int j) {
