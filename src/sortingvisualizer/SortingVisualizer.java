@@ -17,6 +17,7 @@ public class SortingVisualizer extends JFrame {
     private VisualizerPanel visualizerPanel;
     private JComboBox<String> arrayTypeSelector;
     private JSlider speedSlider;
+    private JCheckBox soundToggle;
     private JButton pauseBtn, resumeBtn, stopBtn;
     private JLabel comparisonsLabel, swapsLabel, timeLabel;
     private final SortingMetrics metrics = new SortingMetrics();
@@ -130,7 +131,7 @@ public class SortingVisualizer extends JFrame {
         northContainer.add(topControlPanel);
         add(northContainer, BorderLayout.NORTH);
 
-        // Bottom Control Panel (Array Distribution & Speed Sliders)
+        // Bottom Control Panel (Array Distribution, Speed, and Sound Toggles)
         JPanel bottomControlPanel = new JPanel();
         bottomControlPanel.setBackground(new Color(24, 24, 37));
         bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
@@ -163,12 +164,18 @@ public class SortingVisualizer extends JFrame {
         speedSlider.setFocusable(false);
         bottomControlPanel.add(speedSlider);
 
+        soundToggle = new JCheckBox("Sound", true);
+        soundToggle.setBackground(new Color(24, 24, 37));
+        soundToggle.setForeground(new Color(205, 214, 244));
+        soundToggle.setFocusable(false);
+        soundToggle.addItemListener(e -> SortingAudio.setSoundEnabled(soundToggle.isSelected()));
+        bottomControlPanel.add(soundToggle);
+
         controlsToDisable.add(arrayTypeSelector);
         controlsToDisable.add(generateBtn);
 
         add(bottomControlPanel, BorderLayout.SOUTH);
 
-        // Swing Timer to refresh metrics display every 50ms during sorting
         metricsUpdateTimer = new Timer(50, e -> updateMetricsDisplay());
     }
 

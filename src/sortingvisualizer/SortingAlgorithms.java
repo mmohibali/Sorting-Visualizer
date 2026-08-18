@@ -42,6 +42,12 @@ public class SortingAlgorithms {
         }
     }
 
+    private static void playElementSound(int value) {
+        // Map bar value (5 to 500) to an audible frequency range (150Hz to 850Hz)
+        int freq = 150 + (value * 700) / 500;
+        SortingAudio.playTone(freq, 15);
+    }
+
     public static void bubbleSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
         resetFlags();
         int n = array.length;
@@ -59,6 +65,7 @@ public class SortingAlgorithms {
                         metrics.incrementSwaps();
                         swapped = true;
 
+                        playElementSound(array[i]);
                         visualizerPanel.setHighlightedBars(i - 1, i);
                         Thread.sleep(speedSlider.getValue());
                     }
@@ -90,6 +97,7 @@ public class SortingAlgorithms {
                         metrics.incrementSwaps();
                         j = j - 1;
 
+                        playElementSound(array[j + 1]);
                         visualizerPanel.setHighlightedBars(j + 1, j);
                         Thread.sleep(speedSlider.getValue());
                     } else {
@@ -117,6 +125,7 @@ public class SortingAlgorithms {
                     checkPauseAndStop();
                     metrics.incrementComparisons();
 
+                    playElementSound(array[j]);
                     visualizerPanel.setHighlightedBars(minIndex, j);
                     Thread.sleep(speedSlider.getValue());
 
@@ -137,7 +146,6 @@ public class SortingAlgorithms {
         visualizerPanel.resetHighlights();
     }
 
-    // --- Merge Sort Implementation ---
     public static void mergeSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
         resetFlags();
         try {
@@ -173,6 +181,7 @@ public class SortingAlgorithms {
             checkPauseAndStop();
             metrics.incrementComparisons();
 
+            playElementSound(leftArr[i]);
             visualizerPanel.setHighlightedBars(left + i, mid + 1 + j);
             Thread.sleep(speedSlider.getValue());
 
@@ -190,6 +199,7 @@ public class SortingAlgorithms {
         while (i < n1) {
             checkPauseAndStop();
             array[k] = leftArr[i];
+            playElementSound(leftArr[i]);
             visualizerPanel.setHighlightedBars(k, left + i);
             Thread.sleep(speedSlider.getValue());
             i++;
@@ -200,6 +210,7 @@ public class SortingAlgorithms {
         while (j < n2) {
             checkPauseAndStop();
             array[k] = rightArr[j];
+            playElementSound(rightArr[j]);
             visualizerPanel.setHighlightedBars(k, mid + 1 + j);
             Thread.sleep(speedSlider.getValue());
             j++;
@@ -208,7 +219,6 @@ public class SortingAlgorithms {
         }
     }
 
-    // --- Quick Sort Implementation ---
     public static void quickSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
         resetFlags();
         try {
@@ -235,6 +245,7 @@ public class SortingAlgorithms {
             checkPauseAndStop();
             metrics.incrementComparisons();
 
+            playElementSound(array[j]);
             visualizerPanel.setHighlightedBars(j, high);
             Thread.sleep(speedSlider.getValue());
 
