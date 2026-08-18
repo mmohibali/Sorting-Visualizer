@@ -137,6 +137,119 @@ public class SortingAlgorithms {
         visualizerPanel.resetHighlights();
     }
 
+    // --- Merge Sort Implementation ---
+    public static void mergeSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
+        resetFlags();
+        try {
+            mergeSortHelper(array, 0, array.length - 1, visualizerPanel, speedSlider, metrics);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        visualizerPanel.resetHighlights();
+    }
+
+    private static void mergeSortHelper(int[] array, int left, int right, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) throws InterruptedException {
+        if (left < right) {
+            int mid = left + (right - left) / 2;
+            mergeSortHelper(array, left, mid, visualizerPanel, speedSlider, metrics);
+            mergeSortHelper(array, mid + 1, right, visualizerPanel, speedSlider, metrics);
+            merge(array, left, mid, right, visualizerPanel, speedSlider, metrics);
+        }
+    }
+
+    private static void merge(int[] array, int left, int mid, int right, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) throws InterruptedException {
+        int n1 = mid - left + 1;
+        int n2 = right - mid;
+
+        int[] leftArr = new int[n1];
+        int[] rightArr = new int[n2];
+
+        System.arraycopy(array, left, leftArr, 0, n1);
+        System.arraycopy(array, mid + 1, rightArr, 0, n2);
+
+        int i = 0, j = 0, k = left;
+
+        while (i < n1 && j < n2) {
+            checkPauseAndStop();
+            metrics.incrementComparisons();
+
+            visualizerPanel.setHighlightedBars(left + i, mid + 1 + j);
+            Thread.sleep(speedSlider.getValue());
+
+            if (leftArr[i] <= rightArr[j]) {
+                array[k] = leftArr[i];
+                i++;
+            } else {
+                array[k] = rightArr[j];
+                j++;
+            }
+            metrics.incrementSwaps();
+            k++;
+        }
+
+        while (i < n1) {
+            checkPauseAndStop();
+            array[k] = leftArr[i];
+            visualizerPanel.setHighlightedBars(k, left + i);
+            Thread.sleep(speedSlider.getValue());
+            i++;
+            k++;
+            metrics.incrementSwaps();
+        }
+
+        while (j < n2) {
+            checkPauseAndStop();
+            array[k] = rightArr[j];
+            visualizerPanel.setHighlightedBars(k, mid + 1 + j);
+            Thread.sleep(speedSlider.getValue());
+            j++;
+            k++;
+            metrics.incrementSwaps();
+        }
+    }
+
+    // --- Quick Sort Implementation ---
+    public static void quickSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
+        resetFlags();
+        try {
+            quickSortHelper(array, 0, array.length - 1, visualizerPanel, speedSlider, metrics);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        visualizerPanel.resetHighlights();
+    }
+
+    private static void quickSortHelper(int[] array, int low, int high, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) throws InterruptedException {
+        if (low < high) {
+            int pi = partition(array, low, high, visualizerPanel, speedSlider, metrics);
+            quickSortHelper(array, low, pi - 1, visualizerPanel, speedSlider, metrics);
+            quickSortHelper(array, pi + 1, high, visualizerPanel, speedSlider, metrics);
+        }
+    }
+
+    private static int partition(int[] array, int low, int high, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) throws InterruptedException {
+        int pivot = array[high];
+        int i = (low - 1);
+
+        for (int j = low; j < high; j++) {
+            checkPauseAndStop();
+            metrics.incrementComparisons();
+
+            visualizerPanel.setHighlightedBars(j, high);
+            Thread.sleep(speedSlider.getValue());
+
+            if (array[j] < pivot) {
+                i++;
+                swap(array, i, j);
+                metrics.incrementSwaps();
+            }
+        }
+
+        swap(array, i + 1, high);
+        metrics.incrementSwaps();
+        return (i + 1);
+    }
+
     private static void swap(int[] array, int i, int j) {
         int temp = array[i];
         array[i] = array[j];
