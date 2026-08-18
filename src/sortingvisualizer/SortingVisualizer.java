@@ -17,11 +17,12 @@ public class SortingVisualizer extends JFrame {
     private VisualizerPanel visualizerPanel;
     private JComboBox<String> arrayTypeSelector;
     private JSlider speedSlider;
+    private JButton pauseBtn, resumeBtn, stopBtn;
     private final List<JComponent> controlsToDisable = new ArrayList<>();
 
     public SortingVisualizer() {
         setTitle("Sorting Algorithms Visualizer");
-        setSize(980, 680);
+        setSize(1024, 680);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -33,15 +34,15 @@ public class SortingVisualizer extends JFrame {
         visualizerPanel = new VisualizerPanel(array);
         add(visualizerPanel, BorderLayout.CENTER);
 
-        // Top Control Panel (Algorithm Selectors)
+        // Top Control Panel (Algorithm Selectors & Execution State)
         JPanel topControlPanel = new JPanel();
         topControlPanel.setBackground(new Color(24, 24, 37));
         topControlPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
-        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 12, 5));
 
         JLabel titleLabel = new JLabel("Sorting Visualizer ");
         titleLabel.setForeground(new Color(205, 214, 244));
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
         topControlPanel.add(titleLabel);
 
         JButton bubbleBtn = createStyledButton("Bubble Sort", new Color(137, 180, 250));
@@ -56,6 +57,38 @@ public class SortingVisualizer extends JFrame {
         topControlPanel.add(bubbleBtn);
         topControlPanel.add(insertionBtn);
         topControlPanel.add(selectionBtn);
+
+        // Execution State Buttons (Pause, Resume, Stop)
+        pauseBtn = createStyledButton("Pause", new Color(249, 226, 175));
+        pauseBtn.addActionListener(e -> {
+            SortingAlgorithms.pauseSorting();
+            pauseBtn.setEnabled(false);
+            resumeBtn.setEnabled(true);
+        });
+        pauseBtn.setEnabled(false);
+
+        resumeBtn = createStyledButton("Resume", new Color(148, 226, 213));
+        resumeBtn.addActionListener(e -> {
+            SortingAlgorithms.resumeSorting();
+            resumeBtn.setEnabled(false);
+            pauseBtn.setEnabled(true);
+        });
+        resumeBtn.setEnabled(false);
+
+        stopBtn = createStyledButton("Stop", new Color(243, 139, 168));
+        stopBtn.addActionListener(e -> {
+            SortingAlgorithms.stopSorting();
+            visualizerPanel.resetHighlights();
+            setControlsEnabled(true);
+            pauseBtn.setEnabled(false);
+            resumeBtn.setEnabled(false);
+            stopBtn.setEnabled(false);
+        });
+        stopBtn.setEnabled(false);
+
+        topControlPanel.add(pauseBtn);
+        topControlPanel.add(resumeBtn);
+        topControlPanel.add(stopBtn);
 
         controlsToDisable.add(bubbleBtn);
         controlsToDisable.add(insertionBtn);
@@ -85,7 +118,6 @@ public class SortingVisualizer extends JFrame {
         generateBtn.addActionListener(e -> generateNewArray());
         bottomControlPanel.add(generateBtn);
 
-        // Speed Slider Setup (intentionally excluded from controlsToDisable for live adjustment)
         JLabel speedLabel = new JLabel("Speed:");
         speedLabel.setForeground(new Color(205, 214, 244));
         speedLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
@@ -109,7 +141,7 @@ public class SortingVisualizer extends JFrame {
         button.setBackground(accentColor);
         button.setForeground(new Color(17, 17, 27));
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 14));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
@@ -122,6 +154,9 @@ public class SortingVisualizer extends JFrame {
 
     private void runSortingTask(BiConsumer<int[], VisualizerPanel> algorithm) {
         setControlsEnabled(false);
+        pauseBtn.setEnabled(true);
+        resumeBtn.setEnabled(false);
+        stopBtn.setEnabled(true);
         new SortingTask(algorithm).execute();
     }
 
@@ -213,6 +248,9 @@ public class SortingVisualizer extends JFrame {
         protected void done() {
             visualizerPanel.resetHighlights();
             setControlsEnabled(true);
+            pauseBtn.setEnabled(false);
+            resumeBtn.setEnabled(false);
+            stopBtn.setEnabled(false);
         }
     }
 
