@@ -43,7 +43,6 @@ public class SortingAlgorithms {
     }
 
     private static void playElementSound(int value) {
-        // Map bar value (5 to 500) to an audible frequency range (150Hz to 850Hz)
         int freq = 150 + (value * 700) / 500;
         SortingAudio.playTone(freq, 15);
     }

@@ -16,6 +16,7 @@ public class SortingVisualizer extends JFrame {
     private int[] array;
     private VisualizerPanel visualizerPanel;
     private JComboBox<String> arrayTypeSelector;
+    private JComboBox<SortingThemes.Theme> themeSelector;
     private JSlider speedSlider;
     private JCheckBox soundToggle;
     private JButton pauseBtn, resumeBtn, stopBtn;
@@ -131,7 +132,7 @@ public class SortingVisualizer extends JFrame {
         northContainer.add(topControlPanel);
         add(northContainer, BorderLayout.NORTH);
 
-        // Bottom Control Panel (Array Distribution, Speed, and Sound Toggles)
+        // Bottom Control Panel (Array Distribution, Speed, Themes, and Sound)
         JPanel bottomControlPanel = new JPanel();
         bottomControlPanel.setBackground(new Color(24, 24, 37));
         bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
@@ -163,6 +164,23 @@ public class SortingVisualizer extends JFrame {
         speedSlider.setForeground(new Color(205, 214, 244));
         speedSlider.setFocusable(false);
         bottomControlPanel.add(speedSlider);
+
+        JLabel themeLabel = new JLabel("Theme:");
+        themeLabel.setForeground(new Color(205, 214, 244));
+        themeLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        bottomControlPanel.add(themeLabel);
+
+        themeSelector = new JComboBox<>(SortingThemes.getAvailableThemes());
+        themeSelector.setBackground(new Color(49, 50, 68));
+        themeSelector.setForeground(new Color(205, 214, 244));
+        themeSelector.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        themeSelector.addActionListener(e -> {
+            SortingThemes.Theme selectedTheme = (SortingThemes.Theme) themeSelector.getSelectedItem();
+            if (selectedTheme != null) {
+                visualizerPanel.applyTheme(selectedTheme);
+            }
+        });
+        bottomControlPanel.add(themeSelector);
 
         soundToggle = new JCheckBox("Sound", true);
         soundToggle.setBackground(new Color(24, 24, 37));

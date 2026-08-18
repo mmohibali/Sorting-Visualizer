@@ -17,7 +17,6 @@ public class SortingAudio {
     public static void playTone(int frequency, int durationMs) {
         if (!soundEnabled) return;
 
-        // Run tone playback on a lightweight background thread to prevent audio lag
         new Thread(() -> {
             try {
                 int numSamples = (SAMPLE_RATE * durationMs) / 1000;
@@ -40,7 +39,6 @@ public class SortingAudio {
                     line.drain();
                 }
             } catch (Exception ignored) {
-                // Ignore audio line exceptions to keep visualizer smooth
             }
         }).start();
     }

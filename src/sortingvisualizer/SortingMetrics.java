@@ -10,6 +10,7 @@ public class SortingMetrics {
         comparisons = 0;
         swaps = 0;
         elapsedTime = 0;
+        startTime = 0;
     }
 
     public synchronized void startTimer() {
