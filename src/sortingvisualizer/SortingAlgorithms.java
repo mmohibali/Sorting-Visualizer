@@ -260,6 +260,95 @@ public class SortingAlgorithms {
         return (i + 1);
     }
 
+    // --- TREE & GAP SORTS ---
+
+    public static void heapSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
+        resetFlags();
+        int n = array.length;
+
+        try {
+            for (int i = n / 2 - 1; i >= 0; i--) {
+                heapify(array, n, i, visualizerPanel, speedSlider, metrics);
+            }
+
+            for (int i = n - 1; i > 0; i--) {
+                checkPauseAndStop();
+                swap(array, 0, i);
+                metrics.incrementSwaps();
+                heapify(array, i, 0, visualizerPanel, speedSlider, metrics);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        visualizerPanel.resetHighlights();
+    }
+
+    private static void heapify(int[] array, int n, int i, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) throws InterruptedException {
+        int largest = i;
+        int l = 2 * i + 1;
+        int r = 2 * i + 2;
+
+        if (l < n) {
+            metrics.incrementComparisons();
+            if (array[l] > array[largest]) largest = l;
+        }
+
+        if (r < n) {
+            metrics.incrementComparisons();
+            if (array[r] > array[largest]) largest = r;
+        }
+
+        if (largest != i) {
+            checkPauseAndStop();
+            swap(array, i, largest);
+            metrics.incrementSwaps();
+
+            playElementSound(array[largest]);
+            visualizerPanel.setHighlightedBars(i, largest);
+            Thread.sleep(speedSlider.getValue());
+
+            heapify(array, n, largest, visualizerPanel, speedSlider, metrics);
+        }
+    }
+
+    public static void shellSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
+        resetFlags();
+        int n = array.length;
+
+        try {
+            for (int gap = n / 2; gap > 0; gap /= 2) {
+                for (int i = gap; i < n; i++) {
+                    checkPauseAndStop();
+                    int temp = array[i];
+                    int j = i;
+
+                    while (j >= gap) {
+                        checkPauseAndStop();
+                        metrics.incrementComparisons();
+
+                        if (array[j - gap] > temp) {
+                            array[j] = array[j - gap];
+                            metrics.incrementSwaps();
+                            j -= gap;
+
+                            playElementSound(array[j]);
+                            visualizerPanel.setHighlightedBars(j, i);
+                            Thread.sleep(speedSlider.getValue());
+                        } else {
+                            break;
+                        }
+                    }
+                    array[j] = temp;
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        visualizerPanel.resetHighlights();
+    }
+
     private static void swap(int[] array, int i, int j) {
         int temp = array[i];
         array[i] = array[j];

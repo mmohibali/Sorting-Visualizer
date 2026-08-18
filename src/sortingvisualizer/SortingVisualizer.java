@@ -84,11 +84,19 @@ public class SortingVisualizer extends JFrame {
         JButton quickBtn = createStyledButton("Quick Sort", new Color(243, 139, 168));
         quickBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.quickSort(arr, panel, speedSlider, metrics)));
 
+        JButton heapBtn = createStyledButton("Heap Sort", new Color(249, 226, 175));
+        heapBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.heapSort(arr, panel, speedSlider, metrics)));
+
+        JButton shellBtn = createStyledButton("Shell Sort", new Color(148, 226, 213));
+        shellBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics)));
+
         topControlPanel.add(bubbleBtn);
         topControlPanel.add(insertionBtn);
         topControlPanel.add(selectionBtn);
         topControlPanel.add(mergeBtn);
         topControlPanel.add(quickBtn);
+        topControlPanel.add(heapBtn);
+        topControlPanel.add(shellBtn);
 
         // Execution State Buttons
         pauseBtn = createStyledButton("Pause", new Color(249, 226, 175));
@@ -128,6 +136,8 @@ public class SortingVisualizer extends JFrame {
         controlsToDisable.add(selectionBtn);
         controlsToDisable.add(mergeBtn);
         controlsToDisable.add(quickBtn);
+        controlsToDisable.add(heapBtn);
+        controlsToDisable.add(shellBtn);
 
         northContainer.add(topControlPanel);
         add(northContainer, BorderLayout.NORTH);
