@@ -1,8 +1,10 @@
 package sortingvisualizer;
 
+import javax.swing.JSlider;
+
 public class SortingAlgorithms {
 
-    public static void bubbleSort(int[] array, VisualizerPanel visualizerPanel) {
+    public static void bubbleSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider) {
         int n = array.length;
         boolean swapped;
 
@@ -15,7 +17,7 @@ public class SortingAlgorithms {
 
                     visualizerPanel.setHighlightedBars(i - 1, i);
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(speedSlider.getValue()); // Polls live slider value
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         break;
@@ -27,7 +29,7 @@ public class SortingAlgorithms {
         visualizerPanel.resetHighlights();
     }
 
-    public static void insertionSort(int[] array, VisualizerPanel visualizerPanel) {
+    public static void insertionSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider) {
         int n = array.length;
 
         for (int i = 1; i < n; i++) {
@@ -40,7 +42,7 @@ public class SortingAlgorithms {
 
                 visualizerPanel.setHighlightedBars(j + 1, j);
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(speedSlider.getValue()); // Polls live slider value
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -52,7 +54,7 @@ public class SortingAlgorithms {
         visualizerPanel.resetHighlights();
     }
 
-    public static void selectionSort(int[] array, VisualizerPanel visualizerPanel) {
+    public static void selectionSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider) {
         int n = array.length;
 
         for (int i = 0; i < n - 1; i++) {
@@ -60,7 +62,7 @@ public class SortingAlgorithms {
             for (int j = i + 1; j < n; j++) {
                 visualizerPanel.setHighlightedBars(minIndex, j);
                 try {
-                    Thread.sleep(30);
+                    Thread.sleep(speedSlider.getValue()); // Polls live slider value
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;

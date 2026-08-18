@@ -16,11 +16,12 @@ public class SortingVisualizer extends JFrame {
     private int[] array;
     private VisualizerPanel visualizerPanel;
     private JComboBox<String> arrayTypeSelector;
+    private JSlider speedSlider;
     private final List<JComponent> controlsToDisable = new ArrayList<>();
 
     public SortingVisualizer() {
         setTitle("Sorting Algorithms Visualizer");
-        setSize(950, 650);
+        setSize(980, 680);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -32,7 +33,7 @@ public class SortingVisualizer extends JFrame {
         visualizerPanel = new VisualizerPanel(array);
         add(visualizerPanel, BorderLayout.CENTER);
 
-        // Top Control Panel
+        // Top Control Panel (Algorithm Selectors)
         JPanel topControlPanel = new JPanel();
         topControlPanel.setBackground(new Color(24, 24, 37));
         topControlPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
@@ -44,13 +45,13 @@ public class SortingVisualizer extends JFrame {
         topControlPanel.add(titleLabel);
 
         JButton bubbleBtn = createStyledButton("Bubble Sort", new Color(137, 180, 250));
-        bubbleBtn.addActionListener(e -> runSortingTask(SortingAlgorithms::bubbleSort));
+        bubbleBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.bubbleSort(arr, panel, speedSlider)));
 
         JButton insertionBtn = createStyledButton("Insertion Sort", new Color(166, 227, 161));
-        insertionBtn.addActionListener(e -> runSortingTask(SortingAlgorithms::insertionSort));
+        insertionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.insertionSort(arr, panel, speedSlider)));
 
         JButton selectionBtn = createStyledButton("Selection Sort", new Color(250, 179, 135));
-        selectionBtn.addActionListener(e -> runSortingTask(SortingAlgorithms::selectionSort));
+        selectionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.selectionSort(arr, panel, speedSlider)));
 
         topControlPanel.add(bubbleBtn);
         topControlPanel.add(insertionBtn);
@@ -62,7 +63,7 @@ public class SortingVisualizer extends JFrame {
 
         add(topControlPanel, BorderLayout.NORTH);
 
-        // Bottom Control Panel
+        // Bottom Control Panel (Array Distribution & Speed Sliders)
         JPanel bottomControlPanel = new JPanel();
         bottomControlPanel.setBackground(new Color(24, 24, 37));
         bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
@@ -83,6 +84,18 @@ public class SortingVisualizer extends JFrame {
         JButton generateBtn = createStyledButton("Generate Array", new Color(245, 194, 231));
         generateBtn.addActionListener(e -> generateNewArray());
         bottomControlPanel.add(generateBtn);
+
+        // Speed Slider Setup (intentionally excluded from controlsToDisable for live adjustment)
+        JLabel speedLabel = new JLabel("Speed:");
+        speedLabel.setForeground(new Color(205, 214, 244));
+        speedLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        bottomControlPanel.add(speedLabel);
+
+        speedSlider = new JSlider(1, 150, 30);
+        speedSlider.setBackground(new Color(24, 24, 37));
+        speedSlider.setForeground(new Color(205, 214, 244));
+        speedSlider.setFocusable(false);
+        bottomControlPanel.add(speedSlider);
 
         controlsToDisable.add(arrayTypeSelector);
         controlsToDisable.add(generateBtn);
