@@ -20,7 +20,8 @@ public class SortingVisualizer extends JFrame {
     private JSlider speedSlider;
     private JCheckBox soundToggle;
     private JButton pauseBtn, resumeBtn, stopBtn;
-    private JLabel comparisonsLabel, swapsLabel, timeLabel;
+    private JLabel comparisonsLabel, swapsLabel, accessesLabel, timeLabel;
+    private JLabel timeBadgeLabel, spaceBadgeLabel;
     private final SortingMetrics metrics = new SortingMetrics();
     private Timer metricsUpdateTimer;
     private final List<JComponent> controlsToDisable = new ArrayList<>();
@@ -44,19 +45,26 @@ public class SortingVisualizer extends JFrame {
         JPanel northContainer = new JPanel();
         northContainer.setLayout(new BoxLayout(northContainer, BoxLayout.Y_AXIS));
 
-        // Metrics Dashboard Panel
+        // Day 12: Real-Time Analytics Dashboard Panel with Badges
         JPanel metricsPanel = new JPanel();
         metricsPanel.setBackground(new Color(17, 17, 27));
         metricsPanel.setBorder(BorderFactory.createEmptyBorder(6, 15, 6, 15));
-        metricsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 35, 2));
+        metricsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 2));
 
         comparisonsLabel = createMetricLabel("Comparisons: 0");
         swapsLabel = createMetricLabel("Swaps: 0");
+        accessesLabel = createMetricLabel("Array Accesses: 0");
         timeLabel = createMetricLabel("Time: 0 ms");
+
+        timeBadgeLabel = createBadgeLabel("Time: -", new Color(137, 180, 250));
+        spaceBadgeLabel = createBadgeLabel("Space: -", new Color(203, 166, 247));
 
         metricsPanel.add(comparisonsLabel);
         metricsPanel.add(swapsLabel);
+        metricsPanel.add(accessesLabel);
         metricsPanel.add(timeLabel);
+        metricsPanel.add(timeBadgeLabel);
+        metricsPanel.add(spaceBadgeLabel);
         northContainer.add(metricsPanel);
 
         // Single Row Top Control Panel
@@ -71,31 +79,58 @@ public class SortingVisualizer extends JFrame {
         topControlPanel.add(titleLabel);
 
         JButton bubbleBtn = createStyledButton("Bubble", new Color(137, 180, 250));
-        bubbleBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.bubbleSort(arr, panel, speedSlider, metrics)));
+        bubbleBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n²)", "O(1)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.bubbleSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton insertionBtn = createStyledButton("Insertion", new Color(166, 227, 161));
-        insertionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.insertionSort(arr, panel, speedSlider, metrics)));
+        insertionBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n²)", "O(1)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.insertionSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton selectionBtn = createStyledButton("Selection", new Color(250, 179, 135));
-        selectionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.selectionSort(arr, panel, speedSlider, metrics)));
+        selectionBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n²)", "O(1)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.selectionSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton mergeBtn = createStyledButton("Merge", new Color(203, 166, 247));
-        mergeBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.mergeSort(arr, panel, speedSlider, metrics)));
+        mergeBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n log n)", "O(n)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.mergeSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton quickBtn = createStyledButton("Quick", new Color(243, 139, 168));
-        quickBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.quickSort(arr, panel, speedSlider, metrics)));
+        quickBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n log n)", "O(log n)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.quickSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton heapBtn = createStyledButton("Heap", new Color(249, 226, 175));
-        heapBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.heapSort(arr, panel, speedSlider, metrics)));
+        heapBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n log n)", "O(1)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.heapSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton shellBtn = createStyledButton("Shell", new Color(148, 226, 213));
-        shellBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics)));
+        shellBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n log n)", "O(1)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton countingBtn = createStyledButton("Counting", new Color(180, 190, 254));
-        countingBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.countingSort(arr, panel, speedSlider, metrics)));
+        countingBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(n + k)", "O(k)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.countingSort(arr, panel, speedSlider, metrics));
+        });
 
         JButton radixBtn = createStyledButton("Radix", new Color(235, 160, 172));
-        radixBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.radixSort(arr, panel, speedSlider, metrics)));
+        radixBtn.addActionListener(e -> {
+            setAlgorithmComplexity("O(nk)", "O(n + k)");
+            runSortingTask((arr, panel) -> SortingAlgorithms.radixSort(arr, panel, speedSlider, metrics));
+        });
 
         topControlPanel.add(bubbleBtn);
         topControlPanel.add(insertionBtn);
@@ -234,6 +269,21 @@ public class SortingVisualizer extends JFrame {
         return label;
     }
 
+    private JLabel createBadgeLabel(String text, Color bg) {
+        JLabel badge = new JLabel(text);
+        badge.setFont(new Font("SansSerif", Font.BOLD, 11));
+        badge.setForeground(new Color(17, 17, 27));
+        badge.setBackground(bg);
+        badge.setOpaque(true);
+        badge.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+        return badge;
+    }
+
+    public void setAlgorithmComplexity(String timeComplexity, String spaceComplexity) {
+        timeBadgeLabel.setText("Time: " + timeComplexity);
+        spaceBadgeLabel.setText("Space: " + spaceComplexity);
+    }
+
     private JButton createStyledButton(String text, Color accentColor) {
         JButton button = new JButton(text);
         button.setFont(new Font("SansSerif", Font.BOLD, 11));
@@ -267,6 +317,7 @@ public class SortingVisualizer extends JFrame {
     private void updateMetricsDisplay() {
         comparisonsLabel.setText("Comparisons: " + metrics.getComparisons());
         swapsLabel.setText("Swaps: " + metrics.getSwaps());
+        accessesLabel.setText("Array Accesses: " + metrics.getArrayAccesses());
         timeLabel.setText("Time: " + metrics.getElapsedTime() + " ms");
     }
 

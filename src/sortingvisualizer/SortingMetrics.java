@@ -3,6 +3,7 @@ package sortingvisualizer;
 public class SortingMetrics {
     private int comparisons = 0;
     private int swaps = 0;
+    private int arrayAccesses = 0;
     private long startTime = 0;
     private long elapsedTime = 0;
     private long pauseStartTime = 0;
@@ -12,6 +13,7 @@ public class SortingMetrics {
     public synchronized void reset() {
         comparisons = 0;
         swaps = 0;
+        arrayAccesses = 0;
         startTime = 0;
         elapsedTime = 0;
         pauseStartTime = 0;
@@ -52,19 +54,21 @@ public class SortingMetrics {
 
     public synchronized void incrementComparisons() {
         comparisons++;
+        arrayAccesses += 2; // Reading two elements to compare
     }
 
     public synchronized void incrementSwaps() {
         swaps++;
+        arrayAccesses += 4; // Reading & writing two elements
     }
 
-    public synchronized int getComparisons() {
-        return comparisons;
+    public synchronized void incrementAccesses(int count) {
+        arrayAccesses += count;
     }
 
-    public synchronized int getSwaps() {
-        return swaps;
-    }
+    public synchronized int getComparisons() { return comparisons; }
+    public synchronized int getSwaps() { return swaps; }
+    public synchronized int getArrayAccesses() { return arrayAccesses; }
 
     public synchronized long getElapsedTime() {
         if (running && !paused) {
