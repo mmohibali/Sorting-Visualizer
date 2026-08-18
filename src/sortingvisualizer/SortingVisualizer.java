@@ -27,7 +27,8 @@ public class SortingVisualizer extends JFrame {
 
     public SortingVisualizer() {
         setTitle("Sorting Algorithms Visualizer");
-        setSize(1024, 720);
+        setSize(1280, 720);
+        setMinimumSize(new Dimension(1000, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -46,7 +47,7 @@ public class SortingVisualizer extends JFrame {
         // Metrics Dashboard Panel
         JPanel metricsPanel = new JPanel();
         metricsPanel.setBackground(new Color(17, 17, 27));
-        metricsPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        metricsPanel.setBorder(BorderFactory.createEmptyBorder(6, 15, 6, 15));
         metricsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 35, 2));
 
         comparisonsLabel = createMetricLabel("Comparisons: 0");
@@ -58,42 +59,42 @@ public class SortingVisualizer extends JFrame {
         metricsPanel.add(timeLabel);
         northContainer.add(metricsPanel);
 
-        // Top Control Panel (Algorithm Selectors & Execution State)
+        // Single Row Top Control Panel
         JPanel topControlPanel = new JPanel();
         topControlPanel.setBackground(new Color(24, 24, 37));
-        topControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        topControlPanel.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 4, 3));
 
-        JLabel titleLabel = new JLabel("Visualizer ");
+        JLabel titleLabel = new JLabel("Visualizer: ");
         titleLabel.setForeground(new Color(205, 214, 244));
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
         topControlPanel.add(titleLabel);
 
-        JButton bubbleBtn = createStyledButton("Bubble Sort", new Color(137, 180, 250));
+        JButton bubbleBtn = createStyledButton("Bubble", new Color(137, 180, 250));
         bubbleBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.bubbleSort(arr, panel, speedSlider, metrics)));
 
-        JButton insertionBtn = createStyledButton("Insertion Sort", new Color(166, 227, 161));
+        JButton insertionBtn = createStyledButton("Insertion", new Color(166, 227, 161));
         insertionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.insertionSort(arr, panel, speedSlider, metrics)));
 
-        JButton selectionBtn = createStyledButton("Selection Sort", new Color(250, 179, 135));
+        JButton selectionBtn = createStyledButton("Selection", new Color(250, 179, 135));
         selectionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.selectionSort(arr, panel, speedSlider, metrics)));
 
-        JButton mergeBtn = createStyledButton("Merge Sort", new Color(203, 166, 247));
+        JButton mergeBtn = createStyledButton("Merge", new Color(203, 166, 247));
         mergeBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.mergeSort(arr, panel, speedSlider, metrics)));
 
-        JButton quickBtn = createStyledButton("Quick Sort", new Color(243, 139, 168));
+        JButton quickBtn = createStyledButton("Quick", new Color(243, 139, 168));
         quickBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.quickSort(arr, panel, speedSlider, metrics)));
 
-        JButton heapBtn = createStyledButton("Heap Sort", new Color(249, 226, 175));
+        JButton heapBtn = createStyledButton("Heap", new Color(249, 226, 175));
         heapBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.heapSort(arr, panel, speedSlider, metrics)));
 
-        JButton shellBtn = createStyledButton("Shell Sort", new Color(148, 226, 213));
+        JButton shellBtn = createStyledButton("Shell", new Color(148, 226, 213));
         shellBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics)));
 
-        JButton countingBtn = createStyledButton("Counting Sort", new Color(180, 190, 254));
+        JButton countingBtn = createStyledButton("Counting", new Color(180, 190, 254));
         countingBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.countingSort(arr, panel, speedSlider, metrics)));
 
-        JButton radixBtn = createStyledButton("Radix Sort", new Color(235, 160, 172));
+        JButton radixBtn = createStyledButton("Radix", new Color(235, 160, 172));
         radixBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.radixSort(arr, panel, speedSlider, metrics)));
 
         topControlPanel.add(bubbleBtn);
@@ -106,10 +107,17 @@ public class SortingVisualizer extends JFrame {
         topControlPanel.add(countingBtn);
         topControlPanel.add(radixBtn);
 
-        // Execution State Buttons
+        // Separator between algorithm buttons and state controls
+        JSeparator sep = new JSeparator(JSeparator.VERTICAL);
+        sep.setPreferredSize(new Dimension(2, 20));
+        sep.setForeground(new Color(69, 71, 90));
+        topControlPanel.add(sep);
+
+        // Execution State Controls
         pauseBtn = createStyledButton("Pause", new Color(249, 226, 175));
         pauseBtn.addActionListener(e -> {
             SortingAlgorithms.pauseSorting();
+            metrics.pauseTimer();
             pauseBtn.setEnabled(false);
             resumeBtn.setEnabled(true);
         });
@@ -118,6 +126,7 @@ public class SortingVisualizer extends JFrame {
         resumeBtn = createStyledButton("Resume", new Color(148, 226, 213));
         resumeBtn.addActionListener(e -> {
             SortingAlgorithms.resumeSorting();
+            metrics.resumeTimer();
             resumeBtn.setEnabled(false);
             pauseBtn.setEnabled(true);
         });
@@ -155,19 +164,19 @@ public class SortingVisualizer extends JFrame {
         // Bottom Control Panel (Array Distribution, Speed, Themes, and Sound)
         JPanel bottomControlPanel = new JPanel();
         bottomControlPanel.setBackground(new Color(24, 24, 37));
-        bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        bottomControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        bottomControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 12, 4));
 
         JLabel arrayTypeLabel = new JLabel("Distribution:");
         arrayTypeLabel.setForeground(new Color(205, 214, 244));
-        arrayTypeLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        arrayTypeLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
         bottomControlPanel.add(arrayTypeLabel);
 
         String[] distributions = {"Random", "Nearly Sorted", "Reversed", "Few Unique"};
         arrayTypeSelector = new JComboBox<>(distributions);
         arrayTypeSelector.setBackground(new Color(49, 50, 68));
         arrayTypeSelector.setForeground(new Color(205, 214, 244));
-        arrayTypeSelector.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        arrayTypeSelector.setFont(new Font("SansSerif", Font.PLAIN, 11));
         bottomControlPanel.add(arrayTypeSelector);
 
         JButton generateBtn = createStyledButton("Generate Array", new Color(245, 194, 231));
@@ -176,24 +185,25 @@ public class SortingVisualizer extends JFrame {
 
         JLabel speedLabel = new JLabel("Speed:");
         speedLabel.setForeground(new Color(205, 214, 244));
-        speedLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        speedLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
         bottomControlPanel.add(speedLabel);
 
         speedSlider = new JSlider(1, 150, 30);
         speedSlider.setBackground(new Color(24, 24, 37));
         speedSlider.setForeground(new Color(205, 214, 244));
         speedSlider.setFocusable(false);
+        speedSlider.setPreferredSize(new Dimension(120, 20));
         bottomControlPanel.add(speedSlider);
 
         JLabel themeLabel = new JLabel("Theme:");
         themeLabel.setForeground(new Color(205, 214, 244));
-        themeLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        themeLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
         bottomControlPanel.add(themeLabel);
 
         themeSelector = new JComboBox<>(SortingThemes.getAvailableThemes());
         themeSelector.setBackground(new Color(49, 50, 68));
         themeSelector.setForeground(new Color(205, 214, 244));
-        themeSelector.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        themeSelector.setFont(new Font("SansSerif", Font.PLAIN, 11));
         themeSelector.addActionListener(e -> {
             SortingThemes.Theme selectedTheme = (SortingThemes.Theme) themeSelector.getSelectedItem();
             if (selectedTheme != null) {
@@ -226,11 +236,11 @@ public class SortingVisualizer extends JFrame {
 
     private JButton createStyledButton(String text, Color accentColor) {
         JButton button = new JButton(text);
-        button.setFont(new Font("SansSerif", Font.BOLD, 12));
+        button.setFont(new Font("SansSerif", Font.BOLD, 11));
         button.setBackground(accentColor);
         button.setForeground(new Color(17, 17, 27));
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        button.setBorder(BorderFactory.createEmptyBorder(5, 7, 5, 7));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
