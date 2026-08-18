@@ -4,7 +4,6 @@ import javax.swing.JSlider;
 
 public class SortingAlgorithms {
 
-    // Thread control state flags
     private static volatile boolean isPaused = false;
     private static volatile boolean isStopped = false;
 
@@ -21,7 +20,7 @@ public class SortingAlgorithms {
 
     public static void stopSorting() {
         isStopped = true;
-        resumeSorting(); // Unblock if paused so it can exit immediately
+        resumeSorting();
     }
 
     public static void resetFlags() {
@@ -43,7 +42,7 @@ public class SortingAlgorithms {
         }
     }
 
-    public static void bubbleSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider) {
+    public static void bubbleSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
         resetFlags();
         int n = array.length;
         boolean swapped;
@@ -53,8 +52,11 @@ public class SortingAlgorithms {
                 swapped = false;
                 for (int i = 1; i < n; i++) {
                     checkPauseAndStop();
+                    metrics.incrementComparisons();
+
                     if (array[i - 1] > array[i]) {
                         swap(array, i - 1, i);
+                        metrics.incrementSwaps();
                         swapped = true;
 
                         visualizerPanel.setHighlightedBars(i - 1, i);
@@ -69,7 +71,7 @@ public class SortingAlgorithms {
         visualizerPanel.resetHighlights();
     }
 
-    public static void insertionSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider) {
+    public static void insertionSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
         resetFlags();
         int n = array.length;
 
@@ -79,13 +81,20 @@ public class SortingAlgorithms {
                 int key = array[i];
                 int j = i - 1;
 
-                while (j >= 0 && array[j] > key) {
+                while (j >= 0) {
                     checkPauseAndStop();
-                    array[j + 1] = array[j];
-                    j = j - 1;
+                    metrics.incrementComparisons();
 
-                    visualizerPanel.setHighlightedBars(j + 1, j);
-                    Thread.sleep(speedSlider.getValue());
+                    if (array[j] > key) {
+                        array[j + 1] = array[j];
+                        metrics.incrementSwaps();
+                        j = j - 1;
+
+                        visualizerPanel.setHighlightedBars(j + 1, j);
+                        Thread.sleep(speedSlider.getValue());
+                    } else {
+                        break;
+                    }
                 }
                 array[j + 1] = key;
             }
@@ -96,7 +105,7 @@ public class SortingAlgorithms {
         visualizerPanel.resetHighlights();
     }
 
-    public static void selectionSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider) {
+    public static void selectionSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
         resetFlags();
         int n = array.length;
 
@@ -106,6 +115,8 @@ public class SortingAlgorithms {
                 int minIndex = i;
                 for (int j = i + 1; j < n; j++) {
                     checkPauseAndStop();
+                    metrics.incrementComparisons();
+
                     visualizerPanel.setHighlightedBars(minIndex, j);
                     Thread.sleep(speedSlider.getValue());
 
@@ -114,7 +125,10 @@ public class SortingAlgorithms {
                     }
                 }
 
-                swap(array, minIndex, i);
+                if (minIndex != i) {
+                    swap(array, minIndex, i);
+                    metrics.incrementSwaps();
+                }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

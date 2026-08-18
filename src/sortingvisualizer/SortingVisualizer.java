@@ -18,11 +18,14 @@ public class SortingVisualizer extends JFrame {
     private JComboBox<String> arrayTypeSelector;
     private JSlider speedSlider;
     private JButton pauseBtn, resumeBtn, stopBtn;
+    private JLabel comparisonsLabel, swapsLabel, timeLabel;
+    private final SortingMetrics metrics = new SortingMetrics();
+    private Timer metricsUpdateTimer;
     private final List<JComponent> controlsToDisable = new ArrayList<>();
 
     public SortingVisualizer() {
         setTitle("Sorting Algorithms Visualizer");
-        setSize(1024, 680);
+        setSize(1024, 720);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
@@ -34,31 +37,50 @@ public class SortingVisualizer extends JFrame {
         visualizerPanel = new VisualizerPanel(array);
         add(visualizerPanel, BorderLayout.CENTER);
 
+        // North Container for Controls & Metrics Dashboard
+        JPanel northContainer = new JPanel();
+        northContainer.setLayout(new BoxLayout(northContainer, BoxLayout.Y_AXIS));
+
+        // Metrics Dashboard Panel
+        JPanel metricsPanel = new JPanel();
+        metricsPanel.setBackground(new Color(17, 17, 27));
+        metricsPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        metricsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 35, 2));
+
+        comparisonsLabel = createMetricLabel("Comparisons: 0");
+        swapsLabel = createMetricLabel("Swaps: 0");
+        timeLabel = createMetricLabel("Time: 0 ms");
+
+        metricsPanel.add(comparisonsLabel);
+        metricsPanel.add(swapsLabel);
+        metricsPanel.add(timeLabel);
+        northContainer.add(metricsPanel);
+
         // Top Control Panel (Algorithm Selectors & Execution State)
         JPanel topControlPanel = new JPanel();
         topControlPanel.setBackground(new Color(24, 24, 37));
-        topControlPanel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
-        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 12, 5));
+        topControlPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
-        JLabel titleLabel = new JLabel("Sorting Visualizer ");
+        JLabel titleLabel = new JLabel("Visualizer ");
         titleLabel.setForeground(new Color(205, 214, 244));
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         topControlPanel.add(titleLabel);
 
         JButton bubbleBtn = createStyledButton("Bubble Sort", new Color(137, 180, 250));
-        bubbleBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.bubbleSort(arr, panel, speedSlider)));
+        bubbleBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.bubbleSort(arr, panel, speedSlider, metrics)));
 
         JButton insertionBtn = createStyledButton("Insertion Sort", new Color(166, 227, 161));
-        insertionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.insertionSort(arr, panel, speedSlider)));
+        insertionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.insertionSort(arr, panel, speedSlider, metrics)));
 
         JButton selectionBtn = createStyledButton("Selection Sort", new Color(250, 179, 135));
-        selectionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.selectionSort(arr, panel, speedSlider)));
+        selectionBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.selectionSort(arr, panel, speedSlider, metrics)));
 
         topControlPanel.add(bubbleBtn);
         topControlPanel.add(insertionBtn);
         topControlPanel.add(selectionBtn);
 
-        // Execution State Buttons (Pause, Resume, Stop)
+        // Execution State Buttons
         pauseBtn = createStyledButton("Pause", new Color(249, 226, 175));
         pauseBtn.addActionListener(e -> {
             SortingAlgorithms.pauseSorting();
@@ -78,6 +100,7 @@ public class SortingVisualizer extends JFrame {
         stopBtn = createStyledButton("Stop", new Color(243, 139, 168));
         stopBtn.addActionListener(e -> {
             SortingAlgorithms.stopSorting();
+            stopActiveMetrics();
             visualizerPanel.resetHighlights();
             setControlsEnabled(true);
             pauseBtn.setEnabled(false);
@@ -94,7 +117,8 @@ public class SortingVisualizer extends JFrame {
         controlsToDisable.add(insertionBtn);
         controlsToDisable.add(selectionBtn);
 
-        add(topControlPanel, BorderLayout.NORTH);
+        northContainer.add(topControlPanel);
+        add(northContainer, BorderLayout.NORTH);
 
         // Bottom Control Panel (Array Distribution & Speed Sliders)
         JPanel bottomControlPanel = new JPanel();
@@ -133,6 +157,16 @@ public class SortingVisualizer extends JFrame {
         controlsToDisable.add(generateBtn);
 
         add(bottomControlPanel, BorderLayout.SOUTH);
+
+        // Swing Timer to refresh metrics display every 50ms during sorting
+        metricsUpdateTimer = new Timer(50, e -> updateMetricsDisplay());
+    }
+
+    private JLabel createMetricLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(new Color(166, 227, 161));
+        label.setFont(new Font("Monospaced", Font.BOLD, 13));
+        return label;
     }
 
     private JButton createStyledButton(String text, Color accentColor) {
@@ -141,7 +175,7 @@ public class SortingVisualizer extends JFrame {
         button.setBackground(accentColor);
         button.setForeground(new Color(17, 17, 27));
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+        button.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
@@ -157,7 +191,24 @@ public class SortingVisualizer extends JFrame {
         pauseBtn.setEnabled(true);
         resumeBtn.setEnabled(false);
         stopBtn.setEnabled(true);
+
+        metrics.reset();
+        metrics.startTimer();
+        metricsUpdateTimer.start();
+
         new SortingTask(algorithm).execute();
+    }
+
+    private void updateMetricsDisplay() {
+        comparisonsLabel.setText("Comparisons: " + metrics.getComparisons());
+        swapsLabel.setText("Swaps: " + metrics.getSwaps());
+        timeLabel.setText("Time: " + metrics.getElapsedTime() + " ms");
+    }
+
+    private void stopActiveMetrics() {
+        metrics.stopTimer();
+        metricsUpdateTimer.stop();
+        updateMetricsDisplay();
     }
 
     private void generateNewArray() {
@@ -181,6 +232,8 @@ public class SortingVisualizer extends JFrame {
         }
 
         visualizerPanel.setArrayToVisualize(array);
+        metrics.reset();
+        updateMetricsDisplay();
     }
 
     private int[] generateRandomArray(int size, int minValue, int maxValue) {
@@ -246,6 +299,7 @@ public class SortingVisualizer extends JFrame {
 
         @Override
         protected void done() {
+            stopActiveMetrics();
             visualizerPanel.resetHighlights();
             setControlsEnabled(true);
             pauseBtn.setEnabled(false);
