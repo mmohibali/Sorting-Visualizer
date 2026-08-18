@@ -354,4 +354,106 @@ public class SortingAlgorithms {
         array[i] = array[j];
         array[j] = temp;
     }
+    // --- NON-COMPARISON / DISTRIBUTION SORTS ---
+
+    public static void countingSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
+        resetFlags();
+        int n = array.length;
+        if (n == 0) return;
+
+        try {
+            int max = array[0];
+            for (int i = 1; i < n; i++) {
+                checkPauseAndStop();
+                metrics.incrementComparisons();
+                if (array[i] > max) max = array[i];
+            }
+
+            int[] count = new int[max + 1];
+            for (int i = 0; i < n; i++) {
+                checkPauseAndStop();
+                count[array[i]]++;
+                playElementSound(array[i]);
+                visualizerPanel.setHighlightedBars(i, -1);
+                Thread.sleep(speedSlider.getValue());
+            }
+
+            int index = 0;
+            for (int i = 0; i <= max; i++) {
+                while (count[i] > 0) {
+                    checkPauseAndStop();
+                    array[index] = i;
+                    metrics.incrementSwaps();
+                    
+                    playElementSound(array[index]);
+                    visualizerPanel.setHighlightedBars(index, -1);
+                    Thread.sleep(speedSlider.getValue());
+
+                    index++;
+                    count[i]--;
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        visualizerPanel.resetHighlights();
+    }
+
+    public static void radixSort(int[] array, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) {
+        resetFlags();
+        int n = array.length;
+        if (n == 0) return;
+
+        try {
+            int max = array[0];
+            for (int i = 1; i < n; i++) {
+                checkPauseAndStop();
+                metrics.incrementComparisons();
+                if (array[i] > max) max = array[i];
+            }
+
+            for (int exp = 1; max / exp > 0; exp *= 10) {
+                countSortForRadix(array, n, exp, visualizerPanel, speedSlider, metrics);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        visualizerPanel.resetHighlights();
+    }
+
+    private static void countSortForRadix(int[] array, int n, int exp, VisualizerPanel visualizerPanel, JSlider speedSlider, SortingMetrics metrics) throws InterruptedException {
+        int[] output = new int[n];
+        int[] count = new int[10];
+
+        for (int i = 0; i < n; i++) {
+            checkPauseAndStop();
+            count[(array[i] / exp) % 10]++;
+            
+            playElementSound(array[i]);
+            visualizerPanel.setHighlightedBars(i, -1);
+            Thread.sleep(speedSlider.getValue());
+        }
+
+        for (int i = 1; i < 10; i++) {
+            count[i] += count[i - 1];
+        }
+
+        for (int i = n - 1; i >= 0; i--) {
+            checkPauseAndStop();
+            output[count[(array[i] / exp) % 10] - 1] = array[i];
+            count[(array[i] / exp) % 10]--;
+            metrics.incrementSwaps();
+        }
+
+        for (int i = 0; i < n; i++) {
+            checkPauseAndStop();
+            array[i] = output[i];
+            
+            playElementSound(array[i]);
+            visualizerPanel.setHighlightedBars(i, -1);
+            Thread.sleep(speedSlider.getValue());
+        }
+    }
 }

@@ -90,6 +90,12 @@ public class SortingVisualizer extends JFrame {
         JButton shellBtn = createStyledButton("Shell Sort", new Color(148, 226, 213));
         shellBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics)));
 
+        JButton countingBtn = createStyledButton("Counting Sort", new Color(180, 190, 254));
+        countingBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.countingSort(arr, panel, speedSlider, metrics)));
+
+        JButton radixBtn = createStyledButton("Radix Sort", new Color(235, 160, 172));
+        radixBtn.addActionListener(e -> runSortingTask((arr, panel) -> SortingAlgorithms.radixSort(arr, panel, speedSlider, metrics)));
+
         topControlPanel.add(bubbleBtn);
         topControlPanel.add(insertionBtn);
         topControlPanel.add(selectionBtn);
@@ -97,6 +103,8 @@ public class SortingVisualizer extends JFrame {
         topControlPanel.add(quickBtn);
         topControlPanel.add(heapBtn);
         topControlPanel.add(shellBtn);
+        topControlPanel.add(countingBtn);
+        topControlPanel.add(radixBtn);
 
         // Execution State Buttons
         pauseBtn = createStyledButton("Pause", new Color(249, 226, 175));
@@ -138,6 +146,8 @@ public class SortingVisualizer extends JFrame {
         controlsToDisable.add(quickBtn);
         controlsToDisable.add(heapBtn);
         controlsToDisable.add(shellBtn);
+        controlsToDisable.add(countingBtn);
+        controlsToDisable.add(radixBtn);
 
         northContainer.add(topControlPanel);
         add(northContainer, BorderLayout.NORTH);
