@@ -1,6 +1,5 @@
 package sortingvisualizer;
 
-import java.util.function.BiConsumer;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
@@ -13,17 +12,44 @@ public class SortingVisualizer extends JFrame {
     private static final int ARRAY_MIN_VALUE = 5;
     private static final int ARRAY_MAX_VALUE = 500;
 
-    private int[] array;
-    private VisualizerPanel visualizerPanel;
+    private int[] arrayLeft;
+    private int[] arrayRight;
+
+    private VisualizerPanel panelLeft;
+    private VisualizerPanel panelRight;
+    private JPanel centerContainer;
+    private JSplitPane splitPane;
+
+    private JPanel algoCardPanel;
+    private CardLayout algoCardLayout;
+    private JComboBox<String> leftAlgoBox;
+    private JComboBox<String> rightAlgoBox;
+    private JButton raceStartBtn;
+
     private JComboBox<String> arrayTypeSelector;
     private JComboBox<SortingThemes.Theme> themeSelector;
     private JSlider speedSlider;
     private JCheckBox soundToggle;
+    private JCheckBox dualModeToggle;
+
     private JButton pauseBtn, resumeBtn, stopBtn;
-    private JLabel comparisonsLabel, swapsLabel, accessesLabel, timeLabel;
-    private JLabel timeBadgeLabel, spaceBadgeLabel;
-    private final SortingMetrics metrics = new SortingMetrics();
+    
+    // Left Metrics
+    private JLabel comparisonsLabelLeft, swapsLabelLeft, accessesLabelLeft, timeLabelLeft;
+    private JLabel timeBadgeLabelLeft, spaceBadgeLabelLeft;
+    
+    // Right Metrics
+    private JLabel comparisonsLabelRight, swapsLabelRight, accessesLabelRight, timeLabelRight;
+    private JLabel timeBadgeLabelRight, spaceBadgeLabelRight;
+    private JSeparator metricsSeparator;
+
+    private final SortingMetrics metricsLeft = new SortingMetrics();
+    private final SortingMetrics metricsRight = new SortingMetrics();
     private Timer metricsUpdateTimer;
+    
+    private SwingWorker<Void, Void> activeTaskLeft;
+    private SwingWorker<Void, Void> activeTaskRight;
+    
     private final List<JComponent> controlsToDisable = new ArrayList<>();
 
     public SortingVisualizer() {
@@ -36,123 +62,157 @@ public class SortingVisualizer extends JFrame {
         getContentPane().setBackground(new Color(30, 30, 46));
         setLayout(new BorderLayout());
 
-        array = generateRandomArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
+        // Initialize Arrays & Panels
+        arrayLeft = generateRandomArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
+        arrayRight = arrayLeft.clone();
 
-        visualizerPanel = new VisualizerPanel(array);
-        add(visualizerPanel, BorderLayout.CENTER);
+        panelLeft = new VisualizerPanel(arrayLeft);
+        panelRight = new VisualizerPanel(arrayRight);
+        
+        // FIX: Force equal baseline dimensions so JSplitPane distributes space fairly
+        panelLeft.setPreferredSize(new Dimension(600, 500));
+        panelRight.setPreferredSize(new Dimension(600, 500));
+        panelLeft.setMinimumSize(new Dimension(50, 50));
+        panelRight.setMinimumSize(new Dimension(50, 50));
 
-        // North Container for Controls & Metrics Dashboard
+        centerContainer = new JPanel(new BorderLayout());
+        centerContainer.setBackground(new Color(30, 30, 46));
+        
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelLeft, panelRight);
+        splitPane.setResizeWeight(0.5);
+        splitPane.setDividerSize(4);
+        splitPane.setBorder(null);
+        splitPane.setContinuousLayout(true);
+        
+        // FIX: Aggressively enforce a 50/50 split the moment the panel is laid out or resized
+        splitPane.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                splitPane.setDividerLocation(0.5);
+            }
+        });
+
+        // Default to Single Mode View
+        centerContainer.add(panelLeft, BorderLayout.CENTER);
+        add(centerContainer, BorderLayout.CENTER);
+
+        // --- North Container ---
         JPanel northContainer = new JPanel();
         northContainer.setLayout(new BoxLayout(northContainer, BoxLayout.Y_AXIS));
 
-        // Day 12: Real-Time Analytics Dashboard Panel with Badges
+        // Real-Time Analytics Dashboard Panel
         JPanel metricsPanel = new JPanel();
         metricsPanel.setBackground(new Color(17, 17, 27));
-        metricsPanel.setBorder(BorderFactory.createEmptyBorder(6, 15, 6, 15));
-        metricsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 2));
+        metricsPanel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        metricsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 2));
 
-        comparisonsLabel = createMetricLabel("Comparisons: 0");
-        swapsLabel = createMetricLabel("Swaps: 0");
-        accessesLabel = createMetricLabel("Array Accesses: 0");
-        timeLabel = createMetricLabel("Time: 0 ms");
+        // Left Labels
+        comparisonsLabelLeft = createMetricLabel("Comparisons: 0");
+        swapsLabelLeft = createMetricLabel("Swaps: 0");
+        accessesLabelLeft = createMetricLabel("Array Accesses: 0");
+        timeLabelLeft = createMetricLabel("Time: 0 ms");
+        timeBadgeLabelLeft = createBadgeLabel("Time: -", new Color(137, 180, 250));
+        spaceBadgeLabelLeft = createBadgeLabel("Space: -", new Color(203, 166, 247));
 
-        timeBadgeLabel = createBadgeLabel("Time: -", new Color(137, 180, 250));
-        spaceBadgeLabel = createBadgeLabel("Space: -", new Color(203, 166, 247));
+        // Right Labels
+        comparisonsLabelRight = createMetricLabel("R-Comp: 0");
+        swapsLabelRight = createMetricLabel("R-Swaps: 0");
+        accessesLabelRight = createMetricLabel("R-Acc: 0");
+        timeLabelRight = createMetricLabel("R-Time: 0 ms");
+        timeBadgeLabelRight = createBadgeLabel("Time: -", new Color(137, 180, 250));
+        spaceBadgeLabelRight = createBadgeLabel("Space: -", new Color(203, 166, 247));
 
-        metricsPanel.add(comparisonsLabel);
-        metricsPanel.add(swapsLabel);
-        metricsPanel.add(accessesLabel);
-        metricsPanel.add(timeLabel);
-        metricsPanel.add(timeBadgeLabel);
-        metricsPanel.add(spaceBadgeLabel);
+        metricsSeparator = new JSeparator(JSeparator.VERTICAL);
+        metricsSeparator.setPreferredSize(new Dimension(2, 20));
+        metricsSeparator.setForeground(new Color(69, 71, 90));
+
+        metricsPanel.add(comparisonsLabelLeft);
+        metricsPanel.add(swapsLabelLeft);
+        metricsPanel.add(accessesLabelLeft);
+        metricsPanel.add(timeLabelLeft);
+        metricsPanel.add(timeBadgeLabelLeft);
+        metricsPanel.add(spaceBadgeLabelLeft);
+        
+        metricsPanel.add(metricsSeparator);
+        
+        metricsPanel.add(comparisonsLabelRight);
+        metricsPanel.add(swapsLabelRight);
+        metricsPanel.add(accessesLabelRight);
+        metricsPanel.add(timeLabelRight);
+        metricsPanel.add(timeBadgeLabelRight);
+        metricsPanel.add(spaceBadgeLabelRight);
+
+        setRightMetricsVisible(false);
         northContainer.add(metricsPanel);
 
-        // Single Row Top Control Panel
-        JPanel topControlPanel = new JPanel();
+        // Top Control Panel
+        JPanel topControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 3));
         topControlPanel.setBackground(new Color(24, 24, 37));
         topControlPanel.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-        topControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 4, 3));
+
+        algoCardLayout = new CardLayout();
+        algoCardPanel = new JPanel(algoCardLayout);
+        algoCardPanel.setBackground(new Color(24, 24, 37));
+
+        // 1. Single Mode Algorithm Buttons
+        JPanel singleAlgoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        singleAlgoPanel.setBackground(new Color(24, 24, 37));
 
         JLabel titleLabel = new JLabel("Visualizer: ");
         titleLabel.setForeground(new Color(205, 214, 244));
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
-        topControlPanel.add(titleLabel);
+        singleAlgoPanel.add(titleLabel);
 
-        JButton bubbleBtn = createStyledButton("Bubble", new Color(137, 180, 250));
-        bubbleBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n²)", "O(1)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.bubbleSort(arr, panel, speedSlider, metrics));
-        });
+        singleAlgoPanel.add(createAlgoBtn("Bubble", new Color(137, 180, 250)));
+        singleAlgoPanel.add(createAlgoBtn("Insertion", new Color(166, 227, 161)));
+        singleAlgoPanel.add(createAlgoBtn("Selection", new Color(250, 179, 135)));
+        singleAlgoPanel.add(createAlgoBtn("Merge", new Color(203, 166, 247)));
+        singleAlgoPanel.add(createAlgoBtn("Quick", new Color(243, 139, 168)));
+        singleAlgoPanel.add(createAlgoBtn("Heap", new Color(249, 226, 175)));
+        singleAlgoPanel.add(createAlgoBtn("Shell", new Color(148, 226, 213)));
+        singleAlgoPanel.add(createAlgoBtn("Counting", new Color(180, 190, 254)));
+        singleAlgoPanel.add(createAlgoBtn("Radix", new Color(235, 160, 172)));
 
-        JButton insertionBtn = createStyledButton("Insertion", new Color(166, 227, 161));
-        insertionBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n²)", "O(1)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.insertionSort(arr, panel, speedSlider, metrics));
-        });
+        // 2. Dual Mode Dropdowns
+        JPanel dualAlgoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        dualAlgoPanel.setBackground(new Color(24, 24, 37));
 
-        JButton selectionBtn = createStyledButton("Selection", new Color(250, 179, 135));
-        selectionBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n²)", "O(1)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.selectionSort(arr, panel, speedSlider, metrics));
-        });
+        JLabel dualTitle = new JLabel("Dual Race: ");
+        dualTitle.setForeground(new Color(205, 214, 244));
+        dualTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
+        dualAlgoPanel.add(dualTitle);
 
-        JButton mergeBtn = createStyledButton("Merge", new Color(203, 166, 247));
-        mergeBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n log n)", "O(n)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.mergeSort(arr, panel, speedSlider, metrics));
-        });
+        String[] algos = {"Bubble", "Insertion", "Selection", "Merge", "Quick", "Heap", "Shell", "Counting", "Radix"};
+        leftAlgoBox = new JComboBox<>(algos);
+        rightAlgoBox = new JComboBox<>(algos);
+        rightAlgoBox.setSelectedItem("Insertion");
+        
+        raceStartBtn = createStyledButton("Start Race", new Color(166, 227, 161));
+        raceStartBtn.addActionListener(e -> runDualSortingTask());
 
-        JButton quickBtn = createStyledButton("Quick", new Color(243, 139, 168));
-        quickBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n log n)", "O(log n)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.quickSort(arr, panel, speedSlider, metrics));
-        });
+        dualAlgoPanel.add(new JLabel("Left: ")).setForeground(Color.WHITE);
+        dualAlgoPanel.add(leftAlgoBox);
+        dualAlgoPanel.add(new JLabel(" Right: ")).setForeground(Color.WHITE);
+        dualAlgoPanel.add(rightAlgoBox);
+        dualAlgoPanel.add(raceStartBtn);
 
-        JButton heapBtn = createStyledButton("Heap", new Color(249, 226, 175));
-        heapBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n log n)", "O(1)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.heapSort(arr, panel, speedSlider, metrics));
-        });
+        algoCardPanel.add(singleAlgoPanel, "SINGLE");
+        algoCardPanel.add(dualAlgoPanel, "DUAL");
 
-        JButton shellBtn = createStyledButton("Shell", new Color(148, 226, 213));
-        shellBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n log n)", "O(1)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics));
-        });
+        topControlPanel.add(algoCardPanel);
 
-        JButton countingBtn = createStyledButton("Counting", new Color(180, 190, 254));
-        countingBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(n + k)", "O(k)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.countingSort(arr, panel, speedSlider, metrics));
-        });
-
-        JButton radixBtn = createStyledButton("Radix", new Color(235, 160, 172));
-        radixBtn.addActionListener(e -> {
-            setAlgorithmComplexity("O(nk)", "O(n + k)");
-            runSortingTask((arr, panel) -> SortingAlgorithms.radixSort(arr, panel, speedSlider, metrics));
-        });
-
-        topControlPanel.add(bubbleBtn);
-        topControlPanel.add(insertionBtn);
-        topControlPanel.add(selectionBtn);
-        topControlPanel.add(mergeBtn);
-        topControlPanel.add(quickBtn);
-        topControlPanel.add(heapBtn);
-        topControlPanel.add(shellBtn);
-        topControlPanel.add(countingBtn);
-        topControlPanel.add(radixBtn);
-
-        // Separator between algorithm buttons and state controls
+        // Fixed Separator
         JSeparator sep = new JSeparator(JSeparator.VERTICAL);
         sep.setPreferredSize(new Dimension(2, 20));
         sep.setForeground(new Color(69, 71, 90));
         topControlPanel.add(sep);
 
-        // Execution State Controls
+        // Fixed Execution Controls
         pauseBtn = createStyledButton("Pause", new Color(249, 226, 175));
         pauseBtn.addActionListener(e -> {
             SortingAlgorithms.pauseSorting();
-            metrics.pauseTimer();
+            metricsLeft.pauseTimer();
+            metricsRight.pauseTimer();
             pauseBtn.setEnabled(false);
             resumeBtn.setEnabled(true);
         });
@@ -161,46 +221,41 @@ public class SortingVisualizer extends JFrame {
         resumeBtn = createStyledButton("Resume", new Color(148, 226, 213));
         resumeBtn.addActionListener(e -> {
             SortingAlgorithms.resumeSorting();
-            metrics.resumeTimer();
+            metricsLeft.resumeTimer();
+            metricsRight.resumeTimer();
             resumeBtn.setEnabled(false);
             pauseBtn.setEnabled(true);
         });
         resumeBtn.setEnabled(false);
 
         stopBtn = createStyledButton("Stop", new Color(243, 139, 168));
-        stopBtn.addActionListener(e -> {
-            SortingAlgorithms.stopSorting();
-            stopActiveMetrics();
-            visualizerPanel.resetHighlights();
-            setControlsEnabled(true);
-            pauseBtn.setEnabled(false);
-            resumeBtn.setEnabled(false);
-            stopBtn.setEnabled(false);
-        });
+        stopBtn.addActionListener(e -> stopActiveTasks());
         stopBtn.setEnabled(false);
 
         topControlPanel.add(pauseBtn);
         topControlPanel.add(resumeBtn);
         topControlPanel.add(stopBtn);
-
-        controlsToDisable.add(bubbleBtn);
-        controlsToDisable.add(insertionBtn);
-        controlsToDisable.add(selectionBtn);
-        controlsToDisable.add(mergeBtn);
-        controlsToDisable.add(quickBtn);
-        controlsToDisable.add(heapBtn);
-        controlsToDisable.add(shellBtn);
-        controlsToDisable.add(countingBtn);
-        controlsToDisable.add(radixBtn);
+        
+        controlsToDisable.add(leftAlgoBox);
+        controlsToDisable.add(rightAlgoBox);
+        controlsToDisable.add(raceStartBtn);
 
         northContainer.add(topControlPanel);
         add(northContainer, BorderLayout.NORTH);
 
-        // Bottom Control Panel (Array Distribution, Speed, Themes, and Sound)
-        JPanel bottomControlPanel = new JPanel();
+        // --- Bottom Control Panel ---
+        JPanel bottomControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 4));
         bottomControlPanel.setBackground(new Color(24, 24, 37));
         bottomControlPanel.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        bottomControlPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 12, 4));
+
+        dualModeToggle = new JCheckBox("Dual Mode", false);
+        dualModeToggle.setBackground(new Color(24, 24, 37));
+        dualModeToggle.setForeground(new Color(245, 194, 231));
+        dualModeToggle.setFont(new Font("SansSerif", Font.BOLD, 12));
+        dualModeToggle.setFocusable(false);
+        dualModeToggle.addItemListener(e -> toggleDualMode(dualModeToggle.isSelected()));
+        bottomControlPanel.add(dualModeToggle);
+        controlsToDisable.add(dualModeToggle);
 
         JLabel arrayTypeLabel = new JLabel("Distribution:");
         arrayTypeLabel.setForeground(new Color(205, 214, 244));
@@ -213,10 +268,12 @@ public class SortingVisualizer extends JFrame {
         arrayTypeSelector.setForeground(new Color(205, 214, 244));
         arrayTypeSelector.setFont(new Font("SansSerif", Font.PLAIN, 11));
         bottomControlPanel.add(arrayTypeSelector);
+        controlsToDisable.add(arrayTypeSelector);
 
         JButton generateBtn = createStyledButton("Generate Array", new Color(245, 194, 231));
         generateBtn.addActionListener(e -> generateNewArray());
         bottomControlPanel.add(generateBtn);
+        controlsToDisable.add(generateBtn);
 
         JLabel speedLabel = new JLabel("Speed:");
         speedLabel.setForeground(new Color(205, 214, 244));
@@ -242,7 +299,8 @@ public class SortingVisualizer extends JFrame {
         themeSelector.addActionListener(e -> {
             SortingThemes.Theme selectedTheme = (SortingThemes.Theme) themeSelector.getSelectedItem();
             if (selectedTheme != null) {
-                visualizerPanel.applyTheme(selectedTheme);
+                panelLeft.applyTheme(selectedTheme);
+                panelRight.applyTheme(selectedTheme);
             }
         });
         bottomControlPanel.add(themeSelector);
@@ -254,12 +312,69 @@ public class SortingVisualizer extends JFrame {
         soundToggle.addItemListener(e -> SortingAudio.setSoundEnabled(soundToggle.isSelected()));
         bottomControlPanel.add(soundToggle);
 
-        controlsToDisable.add(arrayTypeSelector);
-        controlsToDisable.add(generateBtn);
-
         add(bottomControlPanel, BorderLayout.SOUTH);
 
         metricsUpdateTimer = new Timer(50, e -> updateMetricsDisplay());
+    }
+    
+    private JButton createAlgoBtn(String name, Color color) {
+        JButton btn = createStyledButton(name, color);
+        btn.addActionListener(e -> runSingleSortingTask(name));
+        controlsToDisable.add(btn);
+        return btn;
+    }
+
+    private void toggleDualMode(boolean isDual) {
+        centerContainer.removeAll();
+        if (isDual) {
+            arrayRight = arrayLeft.clone();
+            panelRight.setArrayToVisualize(arrayRight);
+            metricsRight.reset();
+
+            // FIX: panelLeft gets reparented straight into centerContainer for single
+            // mode, which silently strips it out of splitPane's internal left/right
+            // slots (a component can only live under one parent at a time in Swing,
+            // so the plain Container.add() call above quietly detaches it from the
+            // split pane). Re-attach both panels through the split pane's own API so
+            // it reclaims them properly instead of ending up with a stale/missing
+            // slot -- that stale slot is what pushed the duplicated array offscreen.
+            splitPane.setLeftComponent(panelLeft);
+            splitPane.setRightComponent(panelRight);
+
+            centerContainer.add(splitPane, BorderLayout.CENTER);
+            algoCardLayout.show(algoCardPanel, "DUAL");
+            setRightMetricsVisible(true);
+            
+            centerContainer.revalidate();
+            centerContainer.repaint();
+            
+            // FIX: Force proportional calculation directly utilizing exact pixel width
+            SwingUtilities.invokeLater(() -> {
+                int width = centerContainer.getWidth();
+                if (width > 0) {
+                    splitPane.setDividerLocation(width / 2);
+                } else {
+                    splitPane.setDividerLocation(0.5);
+                }
+            });
+        } else {
+            centerContainer.add(panelLeft, BorderLayout.CENTER);
+            algoCardLayout.show(algoCardPanel, "SINGLE");
+            setRightMetricsVisible(false);
+            centerContainer.revalidate();
+            centerContainer.repaint();
+        }
+        updateMetricsDisplay();
+    }
+
+    private void setRightMetricsVisible(boolean visible) {
+        metricsSeparator.setVisible(visible);
+        comparisonsLabelRight.setVisible(visible);
+        swapsLabelRight.setVisible(visible);
+        accessesLabelRight.setVisible(visible);
+        timeLabelRight.setVisible(visible);
+        timeBadgeLabelRight.setVisible(visible);
+        spaceBadgeLabelRight.setVisible(visible);
     }
 
     private JLabel createMetricLabel(String text) {
@@ -279,9 +394,23 @@ public class SortingVisualizer extends JFrame {
         return badge;
     }
 
-    public void setAlgorithmComplexity(String timeComplexity, String spaceComplexity) {
-        timeBadgeLabel.setText("Time: " + timeComplexity);
-        spaceBadgeLabel.setText("Space: " + spaceComplexity);
+    private void updateComplexities(String algo, boolean isLeft) {
+        String t = "", s = "";
+        switch (algo) {
+            case "Bubble": case "Insertion": case "Selection": t = "O(n²)"; s = "O(1)"; break;
+            case "Merge": t = "O(n log n)"; s = "O(n)"; break;
+            case "Quick": t = "O(n log n)"; s = "O(log n)"; break;
+            case "Heap": case "Shell": t = "O(n log n)"; s = "O(1)"; break;
+            case "Counting": t = "O(n + k)"; s = "O(k)"; break;
+            case "Radix": t = "O(nk)"; s = "O(n + k)"; break;
+        }
+        if (isLeft) {
+            timeBadgeLabelLeft.setText("Time: " + t);
+            spaceBadgeLabelLeft.setText("Space: " + s);
+        } else {
+            timeBadgeLabelRight.setText("Time: " + t);
+            spaceBadgeLabelRight.setText("Space: " + s);
+        }
     }
 
     private JButton createStyledButton(String text, Color accentColor) {
@@ -300,30 +429,121 @@ public class SortingVisualizer extends JFrame {
             control.setEnabled(enabled);
         }
     }
+    
+    private void runSingleSortingTask(String algoName) {
+        updateComplexities(algoName, true);
+        prepareForSort();
 
-    private void runSortingTask(BiConsumer<int[], VisualizerPanel> algorithm) {
+        metricsLeft.reset();
+        metricsLeft.startTimer();
+        metricsUpdateTimer.start();
+
+        activeTaskLeft = createWorker(algoName, arrayLeft, panelLeft, metricsLeft);
+        activeTaskLeft.execute();
+    }
+    
+    private void runDualSortingTask() {
+        String leftAlgo = (String) leftAlgoBox.getSelectedItem();
+        String rightAlgo = (String) rightAlgoBox.getSelectedItem();
+        
+        updateComplexities(leftAlgo, true);
+        updateComplexities(rightAlgo, false);
+        prepareForSort();
+
+        metricsLeft.reset();
+        metricsRight.reset();
+        metricsLeft.startTimer();
+        metricsRight.startTimer();
+        metricsUpdateTimer.start();
+
+        activeTaskLeft = createWorker(leftAlgo, arrayLeft, panelLeft, metricsLeft);
+        activeTaskRight = createWorker(rightAlgo, arrayRight, panelRight, metricsRight);
+        
+        activeTaskLeft.execute();
+        activeTaskRight.execute();
+    }
+    
+    private void prepareForSort() {
         setControlsEnabled(false);
         pauseBtn.setEnabled(true);
         resumeBtn.setEnabled(false);
         stopBtn.setEnabled(true);
+    }
+    
+    private SwingWorker<Void, Void> createWorker(String algo, int[] arr, VisualizerPanel panel, SortingMetrics metrics) {
+        return new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                switch (algo) {
+                    case "Bubble": SortingAlgorithms.bubbleSort(arr, panel, speedSlider, metrics); break;
+                    case "Insertion": SortingAlgorithms.insertionSort(arr, panel, speedSlider, metrics); break;
+                    case "Selection": SortingAlgorithms.selectionSort(arr, panel, speedSlider, metrics); break;
+                    case "Merge": SortingAlgorithms.mergeSort(arr, panel, speedSlider, metrics); break;
+                    case "Quick": SortingAlgorithms.quickSort(arr, panel, speedSlider, metrics); break;
+                    case "Heap": SortingAlgorithms.heapSort(arr, panel, speedSlider, metrics); break;
+                    case "Shell": SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics); break;
+                    case "Counting": SortingAlgorithms.countingSort(arr, panel, speedSlider, metrics); break;
+                    case "Radix": SortingAlgorithms.radixSort(arr, panel, speedSlider, metrics); break;
+                }
+                return null;
+            }
+            @Override
+            protected void done() {
+                metrics.stopTimer();
+                checkIfFinished();
+            }
+        };
+    }
 
-        metrics.reset();
-        metrics.startTimer();
-        metricsUpdateTimer.start();
+    private void checkIfFinished() {
+        boolean leftDone = (activeTaskLeft == null || activeTaskLeft.isDone());
+        boolean rightDone = (!dualModeToggle.isSelected() || activeTaskRight == null || activeTaskRight.isDone());
 
-        new SortingTask(algorithm).execute();
+        if (leftDone && rightDone) {
+            metricsUpdateTimer.stop();
+            panelLeft.resetHighlights();
+            if (dualModeToggle.isSelected()) panelRight.resetHighlights();
+            
+            setControlsEnabled(true);
+            pauseBtn.setEnabled(false);
+            resumeBtn.setEnabled(false);
+            stopBtn.setEnabled(false);
+            updateMetricsDisplay();
+        }
     }
 
     private void updateMetricsDisplay() {
-        comparisonsLabel.setText("Comparisons: " + metrics.getComparisons());
-        swapsLabel.setText("Swaps: " + metrics.getSwaps());
-        accessesLabel.setText("Array Accesses: " + metrics.getArrayAccesses());
-        timeLabel.setText("Time: " + metrics.getElapsedTime() + " ms");
+        if (dualModeToggle.isSelected()) {
+            comparisonsLabelLeft.setText("L-Comp: " + metricsLeft.getComparisons());
+            swapsLabelLeft.setText("L-Swaps: " + metricsLeft.getSwaps());
+            accessesLabelLeft.setText("L-Acc: " + metricsLeft.getArrayAccesses());
+            timeLabelLeft.setText("L-Time: " + metricsLeft.getElapsedTime() + " ms");
+            
+            comparisonsLabelRight.setText("R-Comp: " + metricsRight.getComparisons());
+            swapsLabelRight.setText("R-Swaps: " + metricsRight.getSwaps());
+            accessesLabelRight.setText("R-Acc: " + metricsRight.getArrayAccesses());
+            timeLabelRight.setText("R-Time: " + metricsRight.getElapsedTime() + " ms");
+        } else {
+            comparisonsLabelLeft.setText("Comparisons: " + metricsLeft.getComparisons());
+            swapsLabelLeft.setText("Swaps: " + metricsLeft.getSwaps());
+            accessesLabelLeft.setText("Array Accesses: " + metricsLeft.getArrayAccesses());
+            timeLabelLeft.setText("Time: " + metricsLeft.getElapsedTime() + " ms");
+        }
     }
 
-    private void stopActiveMetrics() {
-        metrics.stopTimer();
+    private void stopActiveTasks() {
+        SortingAlgorithms.stopSorting();
+        metricsLeft.stopTimer();
+        metricsRight.stopTimer();
         metricsUpdateTimer.stop();
+        
+        panelLeft.resetHighlights();
+        if (dualModeToggle.isSelected()) panelRight.resetHighlights();
+        
+        setControlsEnabled(true);
+        pauseBtn.setEnabled(false);
+        resumeBtn.setEnabled(false);
+        stopBtn.setEnabled(false);
         updateMetricsDisplay();
     }
 
@@ -332,23 +552,21 @@ public class SortingVisualizer extends JFrame {
         if (selected == null) selected = "Random";
 
         switch (selected) {
-            case "Nearly Sorted":
-                array = generateNearlySortedArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
-                break;
-            case "Reversed":
-                array = generateReversedArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
-                break;
-            case "Few Unique":
-                array = generateFewUniqueArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
-                break;
-            case "Random":
-            default:
-                array = generateRandomArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE);
-                break;
+            case "Nearly Sorted": arrayLeft = generateNearlySortedArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE); break;
+            case "Reversed": arrayLeft = generateReversedArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE); break;
+            case "Few Unique": arrayLeft = generateFewUniqueArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE); break;
+            case "Random": default: arrayLeft = generateRandomArray(ARRAY_SIZE, ARRAY_MIN_VALUE, ARRAY_MAX_VALUE); break;
         }
 
-        visualizerPanel.setArrayToVisualize(array);
-        metrics.reset();
+        panelLeft.setArrayToVisualize(arrayLeft);
+        metricsLeft.reset();
+
+        if (dualModeToggle.isSelected()) {
+            arrayRight = arrayLeft.clone();
+            panelRight.setArrayToVisualize(arrayRight);
+            metricsRight.reset();
+        }
+        
         updateMetricsDisplay();
     }
 
@@ -398,30 +616,6 @@ public class SortingVisualizer extends JFrame {
             arr[i] = uniqueValues[random.nextInt(uniqueValues.length)];
         }
         return arr;
-    }
-
-    private class SortingTask extends SwingWorker<Void, Void> {
-        private final BiConsumer<int[], VisualizerPanel> sortingAlgorithm;
-
-        public SortingTask(BiConsumer<int[], VisualizerPanel> sortingAlgorithm) {
-            this.sortingAlgorithm = sortingAlgorithm;
-        }
-
-        @Override
-        protected Void doInBackground() {
-            sortingAlgorithm.accept(array, visualizerPanel);
-            return null;
-        }
-
-        @Override
-        protected void done() {
-            stopActiveMetrics();
-            visualizerPanel.resetHighlights();
-            setControlsEnabled(true);
-            pauseBtn.setEnabled(false);
-            resumeBtn.setEnabled(false);
-            stopBtn.setEnabled(false);
-        }
     }
 
     public static void main(String[] args) {
