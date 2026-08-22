@@ -3,7 +3,7 @@ package sortingvisualizer;
 /**
  * Sorting Algorithms Visualizer
  * 
- * Author: Developer
+ * Author: Muhammad Mohib Ali
  * Description: An interactive Java-based educational tool to visualize sorting algorithms in real-time.
  */
 
