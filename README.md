@@ -62,7 +62,7 @@ The interface is structured into three primary control and display zones:
    - Global execution controls (`Pause`, `Resume`, `Stop`).
    - Live telemetry counters (Comparisons, Swaps, Accesses, Elapsed Time) and Big-O badges.
 2. **Center Visualizer Workspace (`JSplitPane`):**
-   - Renders animated bar charts with real-time color-coding for active elements, pivots, and sorted partitions[cite: 17].
+   - Renders animated bar charts with real-time color-coding for active elements, pivots, and sorted partitions.
 3. **East Pseudocode Sidebar:**
    - Displays clean pseudocode blocks for the active algorithm with dynamic line highlighting driven by execution threads.
 4. **South Control Panel:**
@@ -74,13 +74,14 @@ The interface is structured into three primary control and display zones:
 
 ### Prerequisites
 - **Java Development Kit (JDK):** Version 8 or higher.
-- **Operating System:** Compatible with Windows, macOS, and Linux[cite: 17].
+- **Operating System:** Compatible with Windows, macOS, and Linux.
 
 ### Installation & Running
 1. Clone the repository to your local directory:
    ```bash
-   git clone https://github.com/your-username/sorting-algorithms-visualizer.git
-   cd sorting-algorithms-visualizer
+   git clone https://github.com/mmohibali/Sorting-Visualizer.git
+   cd Sorting-Visualizer
+   cd src
    ```
 2. Compile the source files:
 Navigate to the project directory and compile the package
@@ -106,14 +107,15 @@ Navigate to the project directory and compile the package
    ```bash
    sorting-algorithms-visualizer/
    │
-   ├── sortingvisualizer/
-   │   ├── SortingVisualizer.java     # Main application frame, layout, and event handling
-   │   ├── SortingAlgorithms.java     # Core sorting logic, thread coordination, and hooks
-   │   ├── VisualizerPanel.java       # Custom rendering canvas for bar charts and color themes
-   │   ├── PseudocodeSidebar.java     # Live line-by-line pseudocode tracking component
-   │   ├── SortingMetrics.java        # Real-time telemetry tracker (comparisons, swaps, timer)
-   │   ├── SortingAudio.java          # Multithreaded frequency tone generator
-   │   └── SortingThemes.java         # Color palette manager (Cyberpunk, Matrix, Sunset)
+   ├── src
+   │   ├── sortingvisualizer/
+   │   │   ├── SortingVisualizer.java     # Main application frame, layout, and event handling
+   │   │   ├── SortingAlgorithms.java     # Core sorting logic, thread coordination, and hooks
+   │   │   ├── VisualizerPanel.java       # Custom rendering canvas for bar charts and color themes
+   │   │   ├── PseudocodeSidebar.java     # Live line-by-line pseudocode tracking component
+   │   │   ├── SortingMetrics.java        # Real-time telemetry tracker (comparisons, swaps, timer)
+   │   │   ├── SortingAudio.java          # Multithreaded frequency tone generator
+   │   │   └── SortingThemes.java         # Color palette manager (Cyberpunk, Matrix, Sunset)
    │
    └── README.md                      # Complete project documentation
    ```
