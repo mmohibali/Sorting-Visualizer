@@ -1,5 +1,12 @@
 package sortingvisualizer;
 
+/**
+ * Sorting Algorithms Visualizer
+ * 
+ * Author: Developer
+ * Description: An interactive Java-based educational tool to visualize sorting algorithms in real-time.
+ */
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
@@ -17,6 +24,7 @@ public class SortingVisualizer extends JFrame {
 
     private VisualizerPanel panelLeft;
     private VisualizerPanel panelRight;
+    private PseudocodeSidebar pseudocodeSidebar;
     private JPanel centerContainer;
     private JSplitPane splitPane;
 
@@ -69,7 +77,6 @@ public class SortingVisualizer extends JFrame {
         panelLeft = new VisualizerPanel(arrayLeft);
         panelRight = new VisualizerPanel(arrayRight);
         
-        // FIX: Force equal baseline dimensions so JSplitPane distributes space fairly
         panelLeft.setPreferredSize(new Dimension(600, 500));
         panelRight.setPreferredSize(new Dimension(600, 500));
         panelLeft.setMinimumSize(new Dimension(50, 50));
@@ -84,7 +91,6 @@ public class SortingVisualizer extends JFrame {
         splitPane.setBorder(null);
         splitPane.setContinuousLayout(true);
         
-        // FIX: Aggressively enforce a 50/50 split the moment the panel is laid out or resized
         splitPane.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
@@ -92,9 +98,13 @@ public class SortingVisualizer extends JFrame {
             }
         });
 
-        // Default to Single Mode View
         centerContainer.add(panelLeft, BorderLayout.CENTER);
         add(centerContainer, BorderLayout.CENTER);
+
+        // Sidebar
+        pseudocodeSidebar = new PseudocodeSidebar();
+        pseudocodeSidebar.setPreferredSize(new Dimension(280, 0));
+        add(pseudocodeSidebar, BorderLayout.EAST);
 
         // --- North Container ---
         JPanel northContainer = new JPanel();
@@ -106,7 +116,6 @@ public class SortingVisualizer extends JFrame {
         metricsPanel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
         metricsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 2));
 
-        // Left Labels
         comparisonsLabelLeft = createMetricLabel("Comparisons: 0");
         swapsLabelLeft = createMetricLabel("Swaps: 0");
         accessesLabelLeft = createMetricLabel("Array Accesses: 0");
@@ -114,7 +123,6 @@ public class SortingVisualizer extends JFrame {
         timeBadgeLabelLeft = createBadgeLabel("Time: -", new Color(137, 180, 250));
         spaceBadgeLabelLeft = createBadgeLabel("Space: -", new Color(203, 166, 247));
 
-        // Right Labels
         comparisonsLabelRight = createMetricLabel("R-Comp: 0");
         swapsLabelRight = createMetricLabel("R-Swaps: 0");
         accessesLabelRight = createMetricLabel("R-Acc: 0");
@@ -154,7 +162,6 @@ public class SortingVisualizer extends JFrame {
         algoCardPanel = new JPanel(algoCardLayout);
         algoCardPanel.setBackground(new Color(24, 24, 37));
 
-        // 1. Single Mode Algorithm Buttons
         JPanel singleAlgoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         singleAlgoPanel.setBackground(new Color(24, 24, 37));
 
@@ -173,7 +180,6 @@ public class SortingVisualizer extends JFrame {
         singleAlgoPanel.add(createAlgoBtn("Counting", new Color(180, 190, 254)));
         singleAlgoPanel.add(createAlgoBtn("Radix", new Color(235, 160, 172)));
 
-        // 2. Dual Mode Dropdowns
         JPanel dualAlgoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         dualAlgoPanel.setBackground(new Color(24, 24, 37));
 
@@ -201,13 +207,11 @@ public class SortingVisualizer extends JFrame {
 
         topControlPanel.add(algoCardPanel);
 
-        // Fixed Separator
         JSeparator sep = new JSeparator(JSeparator.VERTICAL);
         sep.setPreferredSize(new Dimension(2, 20));
         sep.setForeground(new Color(69, 71, 90));
         topControlPanel.add(sep);
 
-        // Fixed Execution Controls
         pauseBtn = createStyledButton("Pause", new Color(249, 226, 175));
         pauseBtn.addActionListener(e -> {
             SortingAlgorithms.pauseSorting();
@@ -331,36 +335,27 @@ public class SortingVisualizer extends JFrame {
             panelRight.setArrayToVisualize(arrayRight);
             metricsRight.reset();
 
-            // FIX: panelLeft gets reparented straight into centerContainer for single
-            // mode, which silently strips it out of splitPane's internal left/right
-            // slots (a component can only live under one parent at a time in Swing,
-            // so the plain Container.add() call above quietly detaches it from the
-            // split pane). Re-attach both panels through the split pane's own API so
-            // it reclaims them properly instead of ending up with a stale/missing
-            // slot -- that stale slot is what pushed the duplicated array offscreen.
             splitPane.setLeftComponent(panelLeft);
             splitPane.setRightComponent(panelRight);
 
             centerContainer.add(splitPane, BorderLayout.CENTER);
             algoCardLayout.show(algoCardPanel, "DUAL");
             setRightMetricsVisible(true);
+            pseudocodeSidebar.setVisible(false);
             
             centerContainer.revalidate();
             centerContainer.repaint();
             
-            // FIX: Force proportional calculation directly utilizing exact pixel width
             SwingUtilities.invokeLater(() -> {
                 int width = centerContainer.getWidth();
-                if (width > 0) {
-                    splitPane.setDividerLocation(width / 2);
-                } else {
-                    splitPane.setDividerLocation(0.5);
-                }
+                if (width > 0) splitPane.setDividerLocation(width / 2);
+                else splitPane.setDividerLocation(0.5);
             });
         } else {
             centerContainer.add(panelLeft, BorderLayout.CENTER);
             algoCardLayout.show(algoCardPanel, "SINGLE");
             setRightMetricsVisible(false);
+            pseudocodeSidebar.setVisible(true);
             centerContainer.revalidate();
             centerContainer.repaint();
         }
@@ -431,6 +426,7 @@ public class SortingVisualizer extends JFrame {
     }
     
     private void runSingleSortingTask(String algoName) {
+        pseudocodeSidebar.loadAlgorithm(algoName);
         updateComplexities(algoName, true);
         prepareForSort();
 
@@ -438,7 +434,28 @@ public class SortingVisualizer extends JFrame {
         metricsLeft.startTimer();
         metricsUpdateTimer.start();
 
-        activeTaskLeft = createWorker(algoName, arrayLeft, panelLeft, metricsLeft);
+        activeTaskLeft = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                switch (algoName) {
+                    case "Bubble": SortingAlgorithms.bubbleSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Insertion": SortingAlgorithms.insertionSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Selection": SortingAlgorithms.selectionSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Merge": SortingAlgorithms.mergeSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Quick": SortingAlgorithms.quickSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Heap": SortingAlgorithms.heapSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Shell": SortingAlgorithms.shellSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Counting": SortingAlgorithms.countingSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                    case "Radix": SortingAlgorithms.radixSort(arrayLeft, panelLeft, speedSlider, metricsLeft, pseudocodeSidebar); break;
+                }
+                return null;
+            }
+            @Override
+            protected void done() {
+                metricsLeft.stopTimer();
+                checkIfFinished();
+            }
+        };
         activeTaskLeft.execute();
     }
     
@@ -456,8 +473,51 @@ public class SortingVisualizer extends JFrame {
         metricsRight.startTimer();
         metricsUpdateTimer.start();
 
-        activeTaskLeft = createWorker(leftAlgo, arrayLeft, panelLeft, metricsLeft);
-        activeTaskRight = createWorker(rightAlgo, arrayRight, panelRight, metricsRight);
+        activeTaskLeft = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                switch (leftAlgo) {
+                    case "Bubble": SortingAlgorithms.bubbleSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Insertion": SortingAlgorithms.insertionSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Selection": SortingAlgorithms.selectionSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Merge": SortingAlgorithms.mergeSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Quick": SortingAlgorithms.quickSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Heap": SortingAlgorithms.heapSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Shell": SortingAlgorithms.shellSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Counting": SortingAlgorithms.countingSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                    case "Radix": SortingAlgorithms.radixSort(arrayLeft, panelLeft, speedSlider, metricsLeft, null); break;
+                }
+                return null;
+            }
+            @Override
+            protected void done() {
+                metricsLeft.stopTimer();
+                checkIfFinished();
+            }
+        };
+
+        activeTaskRight = new SwingWorker<>() {
+            @Override
+            protected Void doInBackground() {
+                switch (rightAlgo) {
+                    case "Bubble": SortingAlgorithms.bubbleSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Insertion": SortingAlgorithms.insertionSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Selection": SortingAlgorithms.selectionSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Merge": SortingAlgorithms.mergeSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Quick": SortingAlgorithms.quickSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Heap": SortingAlgorithms.heapSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Shell": SortingAlgorithms.shellSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Counting": SortingAlgorithms.countingSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                    case "Radix": SortingAlgorithms.radixSort(arrayRight, panelRight, speedSlider, metricsRight, null); break;
+                }
+                return null;
+            }
+            @Override
+            protected void done() {
+                metricsRight.stopTimer();
+                checkIfFinished();
+            }
+        };
         
         activeTaskLeft.execute();
         activeTaskRight.execute();
@@ -468,31 +528,6 @@ public class SortingVisualizer extends JFrame {
         pauseBtn.setEnabled(true);
         resumeBtn.setEnabled(false);
         stopBtn.setEnabled(true);
-    }
-    
-    private SwingWorker<Void, Void> createWorker(String algo, int[] arr, VisualizerPanel panel, SortingMetrics metrics) {
-        return new SwingWorker<>() {
-            @Override
-            protected Void doInBackground() {
-                switch (algo) {
-                    case "Bubble": SortingAlgorithms.bubbleSort(arr, panel, speedSlider, metrics); break;
-                    case "Insertion": SortingAlgorithms.insertionSort(arr, panel, speedSlider, metrics); break;
-                    case "Selection": SortingAlgorithms.selectionSort(arr, panel, speedSlider, metrics); break;
-                    case "Merge": SortingAlgorithms.mergeSort(arr, panel, speedSlider, metrics); break;
-                    case "Quick": SortingAlgorithms.quickSort(arr, panel, speedSlider, metrics); break;
-                    case "Heap": SortingAlgorithms.heapSort(arr, panel, speedSlider, metrics); break;
-                    case "Shell": SortingAlgorithms.shellSort(arr, panel, speedSlider, metrics); break;
-                    case "Counting": SortingAlgorithms.countingSort(arr, panel, speedSlider, metrics); break;
-                    case "Radix": SortingAlgorithms.radixSort(arr, panel, speedSlider, metrics); break;
-                }
-                return null;
-            }
-            @Override
-            protected void done() {
-                metrics.stopTimer();
-                checkIfFinished();
-            }
-        };
     }
 
     private void checkIfFinished() {

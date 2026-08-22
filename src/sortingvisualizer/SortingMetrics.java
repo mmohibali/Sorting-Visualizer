@@ -16,7 +16,6 @@ public class SortingMetrics {
         arrayAccesses = 0;
         startTime = 0;
         elapsedTime = 0;
-        pauseStartTime = 0;
         running = false;
         paused = false;
     }
@@ -54,12 +53,12 @@ public class SortingMetrics {
 
     public synchronized void incrementComparisons() {
         comparisons++;
-        arrayAccesses += 2; // Reading two elements to compare
+        arrayAccesses += 2;
     }
 
     public synchronized void incrementSwaps() {
         swaps++;
-        arrayAccesses += 4; // Reading & writing two elements
+        arrayAccesses += 4;
     }
 
     public synchronized void incrementAccesses(int count) {

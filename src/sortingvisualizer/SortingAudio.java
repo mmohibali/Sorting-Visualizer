@@ -1,10 +1,13 @@
 package sortingvisualizer;
 
 import javax.sound.sampled.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SortingAudio {
     private static final int SAMPLE_RATE = 8000;
     private static boolean soundEnabled = true;
+    private static final ExecutorService audioExecutor = Executors.newFixedThreadPool(5);
 
     public static void setSoundEnabled(boolean enabled) {
         soundEnabled = enabled;
@@ -17,7 +20,7 @@ public class SortingAudio {
     public static void playTone(int frequency, int durationMs) {
         if (!soundEnabled) return;
 
-        new Thread(() -> {
+        audioExecutor.submit(() -> {
             try {
                 int numSamples = (SAMPLE_RATE * durationMs) / 1000;
                 byte[] buffer = new byte[numSamples];
@@ -40,6 +43,6 @@ public class SortingAudio {
                 }
             } catch (Exception ignored) {
             }
-        }).start();
+        });
     }
 }
